@@ -104,7 +104,7 @@ export function Login() {
     return (
         <Card className="w-[350px]">
             <CardHeader>
-                <CardTitle>Sign in to Agneepath 6.0</CardTitle>
+                <CardTitle>Sign in to Agneepath 7.0</CardTitle>
             </CardHeader>
             <CardContent>
                 <form onSubmit={handleSubmit}>
