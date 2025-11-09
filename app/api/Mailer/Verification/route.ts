@@ -82,20 +82,29 @@ export async function POST(req: Request) {
     if (!verificationId) {
       return new Response(
         JSON.stringify({ error: "User or VerificationId not found" }),
-        { status: 404 }
+        { 
+          status: 404,
+          headers: { 'Content-Type': 'application/json' }
+        }
       );
     }
 
     await sendEmail(email, verificationId);
     return new Response(
       JSON.stringify({ message: "Email sent successfully" }),
-      { status: 200 }
+      { 
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      }
     );
   } catch (error) {
     // console.error("Error sending email:", error);
     return new Response(
       JSON.stringify({ error: "Failed to send email" }),
-      { status: 500 }
+      { 
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      }
     );
   }
 }
