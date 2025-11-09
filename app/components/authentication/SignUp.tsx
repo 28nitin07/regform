@@ -102,7 +102,15 @@ export function SignUp() {
 
             if (data) {
                 setSuccess(data.message || "Sign-up successful!");
-                await post<{ email: string }>("/api/Mailer/Verification", { email: formData.email });
+                
+                // Send verification email
+                const { data: emailData, error: emailError } = await post<{ message: string }>("/api/Mailer/Verification", { email: formData.email });
+                
+                if (emailError) {
+                    console.error("Failed to send verification email:", emailError);
+                    // User is created but email failed - still redirect to verification page
+                }
+                
                 router.push(`/Verification?v=${encrypt({ email: formData.email })}`);
             } else if (error) {
                 setError(error?.message || "Something went wrong.");
