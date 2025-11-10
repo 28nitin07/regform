@@ -8,7 +8,7 @@ import HeadingWithUnderline from "@/app/components/dashboard/headingWithUnderlin
 const accommodations = [
   { name: "Hotel Super 7", poc: "9991655609", website: "NA", distance: "3.8 km" },
   { name: "Fairvacanze", poc: "8221904142", website: "https://www.fairvacanze.com", distance: "4.8 km" },
-  { name: "Leela Grand", poc: "9996754648", website: "https://www.leelagrand.com", distance: "12.7 km" },
+  { name: "Leela Grand", poc: "9996754648", website: "NA", distance: "12.7 km" },
   { name: "Antilia by ZION", poc: "7082009131", website: "https://zionhotels.in", distance: "5.1 km" },
   { name: "Cozette Hotel", poc: "7027868806", website: "https://cozettehotel.com", distance: "8.2 km" },
   { name: "SK Park Blu", poc: "1304091200", website: "https://www.parkblu.com", distance: "11.8 km" },

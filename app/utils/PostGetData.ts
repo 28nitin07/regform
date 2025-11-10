@@ -12,6 +12,21 @@ export async function post<T>(
         },
         body: JSON.stringify(body),
       });
+      
+      // Check if response is JSON
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        const text = await response.text();
+        console.error("Non-JSON response:", text);
+        return { 
+          data: null, 
+          error: { 
+            message: "Server returned an invalid response. Please try again.",
+            details: text.substring(0, 200) 
+          } 
+        };
+      }
+
       const data = await response.json();
   
       if (!response.ok) {
@@ -21,8 +36,8 @@ export async function post<T>(
   
       return { data, error: null };
     } catch (error) {
-      // console.error("Error during POST request:", error);
-      return { data: null, error };
+      console.error("Error during POST request:", error);
+      return { data: null, error: { message: "Network error. Please check your connection." } };
     }
   }
 
@@ -39,6 +54,20 @@ export async function post<T>(
       method: "GET",
     });
 
+    // Check if response is JSON
+    const contentType = response.headers.get("content-type");
+    if (!contentType || !contentType.includes("application/json")) {
+      const text = await response.text();
+      console.error("Non-JSON response:", text);
+      return { 
+        data: null, 
+        error: { 
+          message: "Server returned an invalid response. Please try again.",
+          details: text.substring(0, 200) 
+        } 
+      };
+    }
+
     const data = await response.json();
 
     if (!response.ok) {
@@ -48,7 +77,7 @@ export async function post<T>(
 
     return { data, error: null };
   } catch (error) {
-    // console.error("Error during GET request:", error);
-    return { data: null, error };
+    console.error("Error during GET request:", error);
+    return { data: null, error: { message: "Network error. Please check your connection." } };
   }
 }

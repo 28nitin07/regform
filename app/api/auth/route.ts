@@ -45,7 +45,10 @@ export async function POST(req: Request) {
 
     return new Response(
       JSON.stringify({ message: "User created successfully." }),
-      { status: 201 }
+      { 
+        status: 201,
+        headers: { 'Content-Type': 'application/json' }
+      }
     );
   } catch (error) {
     // console.error("Error creating user:", error);

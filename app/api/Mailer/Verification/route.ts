@@ -33,6 +33,10 @@ async function sendEmail(to: string, id: string) {
     }
   });
 
+  // Generate a unique timestamp to prevent email threading
+  const timestamp = new Date().toISOString();
+  const uniqueMessageId = `<verify-${id}-${Date.now()}@agneepath.co.in>`;
+  
   // const vlink = `${ROOT_URL}verify?token=${id}`;
   const emailContent = `
   <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: auto; border: 1px solid #ddd; padding: 20px; border-radius: 10px;">
@@ -48,7 +52,7 @@ async function sendEmail(to: string, id: string) {
     <p>For any queries contact us at <a href="mailto:agneepath@ashoka.edu.in" style="color: #ed810c; text-decoration: none;">agneepath@ashoka.edu.in</a></p>
     <p>Best regards,<br>Team Agneepath</p>
     <img src="cid:unique-image-cid" alt="Agneepath Logo" style="max-width: 15%; height: auto;" />
-
+    <!-- Timestamp: ${timestamp} -->
   </div>
 `;
 const attachments = [
@@ -64,10 +68,12 @@ const attachments = [
   await transporter.sendMail({
     from: `"Agneepath" <${SMTP_USER}>`,
     to,
-    cc :['vibha.rawat_ug2023@ashoka.edu.in','muhammed.razinmn_ug2023@ashoka.edu.in'],
+    //cc :['jiya.vaya_ug2024@ashoka.edu.in','vidishaa.mundhra_ug2025@ashoka.edu.in','nishka.desai_ug2024@ashoka.edu.in','nishita.agarwal_ug2024@ashoka.edu.in'],
     subject: "Verify your account",
     headers: {
       "X-Gm-NoSave": "1", // Custom header to prevent saving in Sent folder
+      "Message-ID": uniqueMessageId, // Unique Message-ID to prevent threading
+      "X-Entity-Ref-ID": uniqueMessageId, // Additional unique identifier
     },
     // text: `Please verify your email using this Link: ${vlink}`,
     html: emailContent,attachments  });
@@ -77,25 +83,60 @@ const attachments = [
 export async function POST(req: Request) {
   try {
     const { email } = await req.json();
+    
+    // Check if user is already verified
+    const { db } = await connectToDatabase();
+    const collection = db.collection("users");
+    const user = await collection.findOne({ email });
+    
+    if (!user) {
+      return new Response(
+        JSON.stringify({ error: "User not found" }),
+        { 
+          status: 404,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
+    }
+    
+    if (user.emailVerified === true) {
+      return new Response(
+        JSON.stringify({ message: "Email is already verified" }),
+        { 
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
+    }
+    
     const verificationId = await getVerificationId(email);
 
     if (!verificationId) {
       return new Response(
-        JSON.stringify({ error: "User or VerificationId not found" }),
-        { status: 404 }
+        JSON.stringify({ error: "VerificationId not found" }),
+        { 
+          status: 404,
+          headers: { 'Content-Type': 'application/json' }
+        }
       );
     }
 
     await sendEmail(email, verificationId);
     return new Response(
       JSON.stringify({ message: "Email sent successfully" }),
-      { status: 200 }
+      { 
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      }
     );
   } catch (error) {
     // console.error("Error sending email:", error);
     return new Response(
       JSON.stringify({ error: "Failed to send email" }),
-      { status: 500 }
+      { 
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      }
     );
   }
 }
