@@ -526,6 +526,7 @@ const maxDate = new Date(2009, 1, 1); // On or before 1 Feb 2009
 
       if (baseSchema instanceof ZodString) {
         const metaType = getNestedMetaValue(meta, metafieldpath, "type");
+        console.log("fieldPath", fieldPath, "metaType", metaType);
         if (metaType === "file") {
           return (
             <FormFile
