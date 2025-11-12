@@ -80,9 +80,9 @@ export const playerFields = z.object({
             message: "Invalid image format",
         })
         .refine((val) => {
-          const allowed = ["data:image/jpeg", "data:image/png", "data:image/webp"];
+          const allowed = ["data:image/jpeg", "data:image/png"];
           return allowed.some((prefix) => val.startsWith(prefix));
-        }, { message: "Only JPG, PNG, or WEBP images are allowed" })
+        }, { message: "Only JPG or PNG images are allowed" })
         .refine((val) => {
           const sizeKB = (val.length * (3 / 4)) / 1024;
           return sizeKB <= 7 * 1024;

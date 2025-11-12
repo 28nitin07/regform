@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/form";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
-import { ArrowLeft, CalendarIcon } from "lucide-react";
+import { ArrowLeft, CalendarIcon, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import {
@@ -262,6 +262,7 @@ const RenderForm: React.FC<{ schema: ZodObject<ZodRawShape>, draftSchema: ZodObj
   ));
 
   const FormFile = React.memo(({ name, label, accept }: { name: string; label: string; accept?: string }) => {
+    const fileInputRef = React.useRef<HTMLInputElement | null>(null)
     return (
       <FormField
         control={form.control}
@@ -295,15 +296,33 @@ const RenderForm: React.FC<{ schema: ZodObject<ZodRawShape>, draftSchema: ZodObj
                     accept={accept}
                     onChange={(e) => handleFileChange(e, field)}
                     className="w-full border-input rounded-md shadow-sm sm:text-sm text-base"
+                    ref={fileInputRef}
                   />
                   {preview && (
-                    <Image
-                      width={50}
-                      height={50}
-                      src={preview}
-                      alt="Preview"
-                      className="mt-2 object-cover rounded-md border"
-                    />
+                    <div className="relative inline-block">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (fileInputRef.current) {
+                            // Clear the input value
+                            fileInputRef.current.value = '';
+                            field.onChange(""); // reset the form value
+                            setPreview(null); // clear preview
+                          }
+                        }}
+                        className="absolute top-3 left-1 p-1 rounded-full bg-red-50 hover:bg-red-100 text-red-600 transition-colors"
+                        title="Clear selected file"
+                      >
+                        <X size={7} />
+                      </button>
+                      <Image
+                        width={50}
+                        height={50}
+                        src={preview}
+                        alt="Preview"
+                        className="mt-2 object-cover rounded-md border"
+                      />
+                    </div>
                   )}
                 </div>
               </FormControl>

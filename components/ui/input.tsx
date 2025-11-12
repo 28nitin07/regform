@@ -7,8 +7,6 @@ const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
   ({ className, type, ...props }, ref) => {
     const inputRef = React.useRef<HTMLInputElement | null>(null)
 
-    console.log("Input type:", type)
-
     const defaultComponent = (<input
                               type={type}
                               className={cn(
@@ -44,6 +42,7 @@ const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
                                     <Upload className="w-4 h-4" />
                                     <span>Upload File</span>
                                   </button>
+                                  <span className="text-xs">Only .jpeg/.png images allowed. Max filesize: 7MB.</span>
                                 </div>)
 
     return type === "file" ? fileUploadComponent : defaultComponent;
