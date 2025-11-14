@@ -702,6 +702,43 @@ interface PaymentData {
 
 export default function Payments() {
   const paymentFormRef = useRef<HTMLDivElement>(null);
+  const [loading, setLoading] = useState(false)
+  const [registrationDone, setRegistrationDone] = useState<boolean | null>(null)
+  const [paymentDone, setPaymentDone] = useState<boolean | null>(null)
+
+  useEffect(() => {
+      setLoading(true)
+      const getRegistrationState = async () => {
+        try {
+          const token = getAuthToken()
+          if (!token) {
+            // console.error("Auth token not found")
+            setLoading(false)
+            return
+          }
+  
+          const response = await post<{ success: boolean; data?: { registrationDone?: boolean; paymentDone?: boolean } }>(
+            `/api/sync/dashboard`,
+            { cookies: token }
+          )
+
+          if (response.data?.success && response.data?.data) {
+            setRegistrationDone(!!response.data.data.registrationDone)
+            setPaymentDone(!!response.data.data.paymentDone)
+          } else {
+            setRegistrationDone(null)
+            setPaymentDone(null)
+          }
+        } catch (error) {
+          // console.error("Error fetching registration/payment state:", error)
+        } finally {
+          setLoading(false)
+        }
+      }
+  
+      getRegistrationState()
+    }, [])
+
 
   const handleScroll = () => {
     // Scroll to the target section
@@ -893,6 +930,11 @@ export default function Payments() {
   }
 
   const overallTotal = calculateSportsTotal() + calculateAccommodationTotal()
+
+
+  if (registrationDone === false || registrationDone === null || paymentDone === true) {
+    return <span className="text-red-600 font-semibold">{paymentDone === true  ? "Payments have already been confirmed"  : "Please complete your registration first before making payments"}</span>
+  }
 
   if (isLoading) return <div className="flex items-center justify-center h-64">
     <div className="w-12 h-12 border-4 border-black border-t-transparent rounded-full animate-spin"></div>
