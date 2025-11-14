@@ -80,7 +80,7 @@ export function AppSidebar() {
             setPaymentDone(null)
           }
         } catch (error) {
-          // console.error("Error fetching registration/payment state:", error)
+          console.error("Error fetching registration/payment state:", error)
         } finally {
           setLoading(false)
         }
@@ -98,23 +98,25 @@ export function AppSidebar() {
     }, [])
 
     useEffect(() => {
-        // derive items so we can toggle disabled based on fetched user flags
-        setItems(items.map((it) => {
-          if (it.title === "Registration Form") {
-            // enable registration route when registrationDone is false (i.e. not completed)
-            return { ...it, disabled: registrationDone === null ? false : !!registrationDone };
-          }
-          if (it.title === "Payments") {
-            // enable payments when registration is done but payment not done
-            // adjust logic as needed; here we enable Payments only when registrationDone is true
-            return { ...it, disabled: registrationDone === null || registrationDone === false ? true : paymentDone === null ? false : !!paymentDone  };
-          }
-          return it;
-        }))
-      }, [registrationDone, paymentDone]);
+      // derive items so we can toggle disabled based on fetched user flags
+      setItems(items.map((it) => {
+        if (it.title === "Registration Form") {
+          // enable registration route when registrationDone is false (i.e. not completed)
+          return { ...it, disabled: registrationDone === null ? false : !!registrationDone };
+        }
+        if (it.title === "Payments") {
+          // enable payments when registration is done but payment not done
+          // adjust logic as needed; here we enable Payments only when registrationDone is true
+          return { ...it, disabled: registrationDone === null || registrationDone === false ? true : paymentDone === null ? false : !!paymentDone  };
+        }
+        return it;
+      }))
+    }, [registrationDone, paymentDone]);
 
   return (
     <Sidebar>
+      {loading ? <></> :
+      <>
       <SidebarHeader>
         <Image className="mx-auto" src="/logo2.png" alt="Logo" width={180} height={38} priority />
       </SidebarHeader>
@@ -153,7 +155,7 @@ export function AppSidebar() {
             <span>Logout</span>
           </SidebarMenuButton>
         </SidebarMenuItem>
-      </SidebarFooter>
+      </SidebarFooter></>}
     </Sidebar>
   );
 }

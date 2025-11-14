@@ -4,6 +4,20 @@ import { Collection, ObjectId } from "mongodb";
 import { NextRequest, NextResponse } from "next/server";
 import { fetchUserData } from "@/app/utils/GetUpdateUser";
 
+type UserDoc = {
+  _id?: string | { $oid?: string } | { _id?: string };
+  email?: string;
+  registrationDone?: boolean | null;
+  [key: string]: unknown;
+};
+
+type FetchUserResponse = {
+  success: boolean;
+  data?: UserDoc | null;
+};
+
+type FindOneAndUpdateResult = { value?: UserDoc } | UserDoc | null;
+
 export async function POST(req: NextRequest) {
   try {
     const email = getEmailFromToken(req);
@@ -17,7 +31,11 @@ export async function POST(req: NextRequest) {
     const { db } = await connectToDatabase();
     const usersCollection: Collection = db.collection("users");
 
-    const userResponse = await fetchUserData("email", email, ["_id", "email"]);
+    const userResponse = (await fetchUserData(
+      "email",
+      email,
+      ["_id", "email"]
+    )) as FetchUserResponse;
     console.log("fetchUserData result:", JSON.stringify(userResponse));
 
     if (!userResponse.success || !userResponse.data) {
@@ -28,22 +46,25 @@ export async function POST(req: NextRequest) {
     }
 
     const rawId = userResponse.data._id;
-    let query: any = null;
+    let query: Record<string, unknown> = {};
 
+    // normalize possible _id shapes into a string
     let idStr = "";
     if (!rawId) {
       idStr = "";
     } else if (typeof rawId === "string") {
       idStr = rawId;
-    } else if ("$oid" in (rawId as any) && typeof (rawId as any).$oid === "string") {
-      idStr = (rawId as any).$oid;
-    } else if ("_id" in (rawId as any) && typeof (rawId as any)._id === "string") {
-      idStr = (rawId as any)._id;
-    } else {
-      try {
-        idStr = String(rawId);
-      } catch {
-        idStr = "";
+    } else if (typeof rawId === "object" && rawId !== null) {
+      if (typeof (rawId as { $oid?: string }).$oid === "string") {
+        idStr = (rawId as { $oid?: string }).$oid as string;
+      } else if (typeof (rawId as { _id?: string })._id === "string") {
+        idStr = (rawId as { _id?: string })._id as string;
+      } else {
+        try {
+          idStr = String(rawId);
+        } catch {
+          idStr = "";
+        }
       }
     }
 
@@ -51,7 +72,11 @@ export async function POST(req: NextRequest) {
       try {
         query = { _id: new ObjectId(idStr) };
       } catch (err) {
-        console.warn("Could not convert idStr to ObjectId, falling back to email. idStr:", idStr, err);
+        console.warn(
+          "Could not convert idStr to ObjectId, falling back to email. idStr:",
+          idStr,
+          err
+        );
         query = { email };
       }
     } else {
@@ -60,24 +85,47 @@ export async function POST(req: NextRequest) {
 
     const update = { $set: { registrationDone: true, updatedAt: new Date() } };
 
-    // perform primary update
-    const result = await usersCollection.findOneAndUpdate(query, update, { returnDocument: "after" });
-    // normalize result: some drivers return { value: doc } others return doc directly
-    const updatedDoc = (result && (result as any).value) ? (result as any).value : result;
+    const rawResult = (await usersCollection.findOneAndUpdate(
+      query,
+      update,
+      { returnDocument: "after" }
+    )) as FindOneAndUpdateResult;
+
+    // normalize result: Mongo driver may return { value: doc } or doc directly
+    let updatedDoc: UserDoc | null = null;
+    if (rawResult && typeof rawResult === "object" && "value" in rawResult) {
+      updatedDoc = (rawResult as { value?: UserDoc }).value ?? null;
+    } else {
+      updatedDoc = (rawResult as UserDoc) ?? null;
+    }
 
     console.log("Primary update normalized:", !!updatedDoc, updatedDoc);
 
-    if (!updatedDoc || !((updatedDoc as any)._id || (updatedDoc as any).email)) {
-      console.warn("Primary update did not match a document. Attempting fallback update by email.");
-      const fallbackRaw = await usersCollection.findOneAndUpdate({ email }, update, { returnDocument: "after" });
-      const fallback = (fallbackRaw && (fallbackRaw as any).value) ? (fallbackRaw as any).value : fallbackRaw;
+    if (!updatedDoc || (!updatedDoc._id && !updatedDoc.email)) {
+      console.warn(
+        "Primary update did not match a document. Attempting fallback update by email."
+      );
+      const fallbackRaw = (await usersCollection.findOneAndUpdate(
+        { email },
+        update,
+        { returnDocument: "after" }
+      )) as FindOneAndUpdateResult;
+
+      let fallback: UserDoc | null = null;
+      if (fallbackRaw && typeof fallbackRaw === "object" && "value" in fallbackRaw) {
+        fallback = (fallbackRaw as { value?: UserDoc }).value ?? null;
+      } else {
+        fallback = (fallbackRaw as UserDoc) ?? null;
+      }
+
       console.log("Fallback update normalized:", !!fallback, fallback);
-      if (!fallback || !((fallback as any)._id || (fallback as any).email)) {
+      if (!fallback || (!fallback._id && !fallback.email)) {
         return NextResponse.json(
           { success: false, message: "Failed to update registration status" },
           { status: 500 }
         );
       }
+
       return NextResponse.json(
         { success: true, message: "Registration completed (fallback)", data: fallback },
         { status: 200 }
