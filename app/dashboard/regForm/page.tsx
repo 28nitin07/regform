@@ -3,7 +3,7 @@
 /* eslint-disable react/no-unescaped-entities */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-import { useEffect, useState, useMemo } from "react"
+import { useEffect, useState } from "react"
 import { ArrowRight, Medal } from 'lucide-react';
 import HeadingWithUnderline from "@/app/components/dashboard/headingWithUnderline"
 import RenderPopoverForm from "@/app/components/dashboard/form/PopoverForm"
