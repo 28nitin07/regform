@@ -246,7 +246,6 @@ export default function RegForm() {
       getCoreRowModel: getCoreRowModel(),
     })
 
-    console.log("Table data:", data);
 
     return (
       <div className="overflow-x-auto rounded-lg shadow-lg">
