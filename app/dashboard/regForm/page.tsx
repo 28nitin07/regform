@@ -30,11 +30,13 @@ export type FormData = {
   title: string;
   updatedAt: string;
   status: string;
+  playerFields: Array<Record<string, any>>;
+  fields?: { playerFields?: Array<Record<string, any>>; [k: string]: any };
 };
 
 const ActionCell: React.FC<{ row: any }> = ({ row }) => {
   const router = useRouter();
-  const { status, _id, title } = row.original;
+  const { status, _id, title, playerFields } = row.original;
 
   return (
     <div className="flex justify-center">
@@ -43,12 +45,37 @@ const ActionCell: React.FC<{ row: any }> = ({ row }) => {
           onClick={() =>
             router.push(`/dashboard/regForm/form?i=${encrypt({ id: _id, title: title })}`)
           }
+          className="mr-2"
         >
           Edit
         </Button>
       ) : (
-        <Button disabled>Edit</Button>
+        <Button disabled className="mr-2">Edit</Button>
       )}
+
+
+      <AlertDialog>
+        <AlertDialogTrigger asChild>
+          <Button
+            onClick={() =>
+              router.push(`/dashboard/regForm/form?i=${encrypt({ id: _id, title: title })}`)
+            }
+          >
+            Delete
+          </Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogTitle>Delete Form</AlertDialogTitle>
+          <p>Are you sure you want to delete this form? This action cannot be undone.</p>
+          <div className="flex justify-end space-x-2 gap-2 items-end sticky bottom-0 right-0 pt-4 bg-white mt-4 mr-5">
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <Button type="submit">
+              Delete Form
+            </Button>
+          </div>
+  
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
@@ -83,8 +110,21 @@ const columns: ColumnDef<FormData>[] = [
   },
   {
     id: "actions",
-    header: "Edit Form",
+    header: "Form Actions",
     cell: ({ row }) => <ActionCell row={row} />, // Use the new functional component
+  },
+  {
+    accessorKey: "estimatedCost",
+    header: "Estimated Cost",
+    cell: ({ row }) => {
+      console.log(row)
+      const count = Array.isArray(row.original.playerFields)
+        ? row.original.playerFields.length
+        : Array.isArray(row.original.fields?.playerFields)
+        ? row.original.fields.playerFields.length
+        : 0;
+      return count * 800;
+    },
   },
 ];
 
@@ -206,6 +246,8 @@ export default function RegForm() {
       columns,
       getCoreRowModel: getCoreRowModel(),
     })
+
+    console.log("Table data:", data);
 
     return (
       <div className="overflow-x-auto rounded-lg shadow-lg">

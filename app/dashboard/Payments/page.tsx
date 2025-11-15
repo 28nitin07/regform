@@ -971,6 +971,17 @@ export default function Payments() {
             </tbody>
           </table>
         </div>
+        <h3 className="text-lg font-medium mb-3">UPI Details</h3>
+        <div className="overflow-x-auto">
+          <table className="w-full mb-6 border-collapse bg-white shadow-sm rounded-lg">
+            <tbody className="divide-y divide-gray-200">
+              <tr>
+                <td className="py-3 px-4 font-medium bg-gray-50">UPI ID</td>
+                <td className="py-3 px-4">upi@upi</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div className="space-y-4 ml-4">
