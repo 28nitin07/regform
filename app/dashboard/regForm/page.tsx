@@ -56,11 +56,7 @@ const ActionCell: React.FC<{ row: any }> = ({ row }) => {
 
       <AlertDialog>
         <AlertDialogTrigger asChild>
-          <Button
-            onClick={() =>
-              router.push(`/dashboard/regForm/form?i=${encrypt({ id: _id, title: title })}`)
-            }
-          >
+          <Button>
             Delete
           </Button>
         </AlertDialogTrigger>
@@ -69,7 +65,25 @@ const ActionCell: React.FC<{ row: any }> = ({ row }) => {
           <p>Are you sure you want to delete this form? This action cannot be undone.</p>
           <div className="flex justify-end space-x-2 gap-2 items-end sticky bottom-0 right-0 pt-4 bg-white mt-4 mr-5">
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <Button type="submit">
+            <Button onClick={async () => {
+                try {
+                  const response = await post("/api/form/deleteForm", {
+                    id: _id,
+                    title: title,
+                  });
+
+                  const res = response.data as { success: boolean; message?: string };
+
+                  if (res.success) {
+                    window.location.reload(); // or router.refresh()
+                  } else {
+                    console.error("Failed to delete form");
+                  }
+                } catch (error) {
+                  console.error("Error deleting form:", error);
+                }
+              }}
+            >
               Delete Form
             </Button>
           </div>
@@ -123,7 +137,7 @@ const columns: ColumnDef<FormData>[] = [
         : Array.isArray(row.original.fields?.playerFields)
         ? row.original.fields.playerFields.length
         : 0;
-      return count * 800;
+      return `₹${count * 800}`;
     },
   },
 ];
