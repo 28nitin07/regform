@@ -11,15 +11,26 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ({ className, type, hideFileInfo=false, ...props }, ref) => {
     const inputRef = React.useRef<HTMLInputElement | null>(null)
 
-    const defaultComponent = (<input
-                              type={type}
-                              className={cn(
-                                "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
-                                className
-                              )}
-                              ref={ref}
-                              {...props}
-                            />)
+    // Normalize value to avoid uncontrolled -> controlled warnings
+    const inputProps = { ...props } as React.ComponentProps<"input">;
+    if (type !== "file") {
+      // Ensure value is always a string (controlled) when using react-hook-form field.value
+      if (inputProps.value === undefined) {
+        inputProps.value = "";
+      }
+    }
+
+    const defaultComponent = (
+      <input
+        type={type}
+        className={cn(
+          "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+          className
+        )}
+        ref={ref}
+        {...inputProps}
+      />
+    );
     
     const fileUploadComponent = (<div>
                                   <input
