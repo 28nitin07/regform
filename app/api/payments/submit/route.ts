@@ -1,49 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import path from "path";
-import { writeFile, mkdir } from "fs/promises";
 import { Collection, ObjectId } from "mongodb";
 import { connectToDatabase } from "@/lib/mongodb";
 import { getEmailFromToken } from "@/app/utils/forms/getEmail";
 import { fetchUserData } from "@/app/utils/GetUpdateUser";
-import crypto from "crypto";
+// unused imports removed
 import { sendPaymentConfirmationEmail } from "@/app/utils/mailer/PaymentEmail";
-/* eslint-disable @typescript-eslint/no-unused-vars */
 
-// Helper to add file to Strapi's database
-async function addFileToStrapiDatabase(fileData: {
-  name: string;
-  hash: string;
-  ext: string;
-  mime: string;
-  size: number;
-  url: string;
-}) {
-  const { db } = await connectToDatabase();
-  const uploadCollection: Collection = db.collection("upload_file");
-
-  const result = await uploadCollection.insertOne({
-    name: fileData.name,
-    hash: fileData.hash,
-    ext: fileData.ext,
-    mime: fileData.mime,
-    size: fileData.size,
-    url: fileData.url,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  });
-
-  if (!result.insertedId) {
-    throw new Error("Failed to insert file into Strapi database.");
-  }
-
-  return result.insertedId;
-}
+// (removed unused helper `addFileToStrapiDatabase`)
 
 // Interfaces for data
-interface SportPlayers {
-  sport: string;
-  players: number;
-}
 interface PaymentFormData {
   accommodationPrice?: number;
   accommodationPeople?: number;

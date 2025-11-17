@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-wrapper-object-types */
-
 import { getEmailFromToken } from "@/app/utils/forms/getEmail";
 import { connectToDatabase } from "@/lib/mongodb";
 import { Collection, ObjectId } from "mongodb";
@@ -70,6 +68,7 @@ export async function POST(req: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
+    console.error("Error deleting form:", error);
     return NextResponse.json(
       { success: false, message: "Internal Server Error" },
       { status: 500 }

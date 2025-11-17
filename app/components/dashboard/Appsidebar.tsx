@@ -99,7 +99,7 @@ export function AppSidebar() {
 
     useEffect(() => {
       // derive items so we can toggle disabled based on fetched user flags
-      setItems(items.map((it) => {
+      setItems(prevItems => prevItems.map((it) => {
         if (it.title === "Registration Form") {
           // enable registration route when registrationDone is false (i.e. not completed)
           return { ...it, disabled: registrationDone === null ? false : !!registrationDone };

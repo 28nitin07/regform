@@ -1,5 +1,4 @@
 import nodemailer from "nodemailer";
-import { sports } from "../forms/schema";
 
 interface PaymentFormData {
     name?:string,
