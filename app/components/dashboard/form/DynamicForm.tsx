@@ -320,7 +320,6 @@ const RenderForm: React.FC<{ schema: ZodObject<ZodRawShape>, draftSchema: ZodObj
   ));
 
   const FormFile = React.memo(({ name, label, accept }: { name: string; label: string; accept?: string }) => {
-    const fileInputRef = React.useRef<HTMLInputElement | null>(null)
     return (
       <FormField
         control={form.control}

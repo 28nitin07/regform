@@ -152,16 +152,14 @@ const PaymentFormSchema = z.object({
     }),
   payeeName: z.string().nonempty({ message: "Payee name is required." }),
   transactionId: z.string().nonempty({ message: "Transaction ID is required." }),
-  paymentProof: z.string()
-    .min(1, { message: "Payment proof is required" })
-    .refine((val) => {
-      const allowed = ["data:image/jpeg", "data:image/png", "data:application/pdf"];
-      return allowed.some((prefix) => val.startsWith(prefix));
-    }, { message: "Only JPG or PNG images, or PDFs are allowed" })
-    .refine((val) => {
-      const sizeKB = (val.length * (3 / 4)) / 1024;
-      return sizeKB <= 10 * 1024;
-    }, { message: "Image must be less than 10MB" }),
+  paymentProof: z
+      .instanceof(File)
+      .refine((file) => ["image/jpeg", "image/png", "application/pdf"].includes(file.type), {
+        message: "Only JPEG, PNG images or PDFs allowed",
+      })
+      .refine((file) => file.size <= 10 * 1024 * 1024, {
+          message: "File must be smaller than 10MB",
+      }),
   paymentDate: z
     .date()
     .refine((date) => !isNaN(date.getTime()), { message: "A valid payment date is required." }),
@@ -209,10 +207,10 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ accommodationPrice = 2100, sp
       formData.append("transactionId", data.transactionId);
       formData.append("paymentDate", data.paymentDate.toISOString());
 
-      // paymentProof is a data URL string — append as-is
-      if (data.paymentProof) {
-        formData.append("paymentProof", data.paymentProof);
-      }
+
+      formData.append("paymentProof", data.paymentProof);
+
+
       if (data.remarks) {
         formData.append("remarks", data.remarks);
       }
@@ -273,16 +271,10 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ accommodationPrice = 2100, sp
   };
 
 
-
-  const fileInputRef = useRef<HTMLInputElement | null>(null)
-  const [preview, setPreview] = useState<string | null>(
-    null
-  );
-
   const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
 
   // create/revoke blob URL for PDF data URLs so iframe can render
-  useEffect(() => {
+  /*useEffect(() => {
     if (preview && preview.startsWith("data:application/")) {
       try {
         const split = preview.split(',');
@@ -315,7 +307,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ accommodationPrice = 2100, sp
         URL.revokeObjectURL(pdfBlobUrl);
       }
     };
-  }, [preview])
+  }, [preview])*/
 
   return (
     <Form {...form}>
@@ -413,86 +405,124 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ accommodationPrice = 2100, sp
               control={form.control}
               name="paymentProof"
               render={({ field }) => {
-                const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, field: ControllerRenderProps<{
-                    paymentMode: string;
-                    amountInNumbers: number;
-                    amountInWords: string;
-                    payeeName: string;
-                    transactionId: string;
-                    paymentProof: string;
-                    paymentDate: Date;
-                    accommodationPeople?: number | undefined;
-                    remarks?: string | undefined;
-                }, "paymentProof">) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    const reader = new FileReader();
-                    reader.onloadend = () => {
-                      const dataUrl = reader.result as string;
-                      field.onChange(dataUrl); // Save base64 string into form state
-                      setPreview(dataUrl);
-                    };
-                    reader.readAsDataURL(file);
+                const value = field.value;
+                const [preview, setPreview] = useState<string | null>(null);
+                const [fileType, setFileType] = useState<string | null>(null);
+                const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
+
+                // Cleanup blob URLs on unmount
+                useEffect(() => {
+                  return () => {
+                    if (preview && preview.startsWith("blob:")) {
+                      URL.revokeObjectURL(preview);
+                    }
+                    if (pdfBlobUrl) {
+                      URL.revokeObjectURL(pdfBlobUrl);
+                    }
+                  };
+                }, [preview, pdfBlobUrl]);
+
+                // Handle PDF blob URL creation
+                useEffect(() => {
+                  if (fileType === "application/pdf" && preview) {
+                    setPdfBlobUrl(preview);
+                  } else {
+                    if (pdfBlobUrl) {
+                      URL.revokeObjectURL(pdfBlobUrl);
+                      setPdfBlobUrl(null);
+                    }
                   }
+                }, [fileType, preview]);
+
+                // Fetch preview for existing files (string URLs)
+                useEffect(() => {
+                  if (typeof value === "string") {
+                    async function fetchPreview() {
+                      try {
+                        const res = await fetch(`/api/payments/proof/${value}`);
+                        if (!res.ok) return;
+                        const blob = await res.blob();
+                        const previewUrl = URL.createObjectURL(blob);
+                        setPreview(previewUrl);
+                        setFileType(blob.type);
+                      } catch (err) {
+                        console.error("Failed to fetch preview", err);
+                      }
+                    }
+                    fetchPreview();
+                  }
+                }, [value]);
+
+                const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+
+                  // Revoke previous preview URL
+                  if (preview && preview.startsWith("blob:")) {
+                    URL.revokeObjectURL(preview);
+                  }
+
+                  field.onChange(file);
+                  const previewUrl = URL.createObjectURL(file);
+                  setPreview(previewUrl);
+                  setFileType(file.type);
                 };
+
+                const handleClear = () => {
+                  if (preview && preview.startsWith("blob:")) {
+                    URL.revokeObjectURL(preview);
+                  }
+                  if (pdfBlobUrl) {
+                    URL.revokeObjectURL(pdfBlobUrl);
+                    setPdfBlobUrl(null);
+                  }
+                  field.onChange(undefined);
+                  setPreview(null);
+                  setFileType(null);
+                };
+
                 return (
                   <FormItem>
                     <FormLabel className="text-lg font-bold">Payment Proof</FormLabel>
-                    <FormDescription>File Type: PDF/JPEG/PNG. Maximum 1. Max filesize: 10MB</FormDescription>
+                    <FormDescription>
+                      File Type: PDF/JPEG/PNG. Maximum 1. Max filesize: 10MB
+                    </FormDescription>
                     <div>
                       <Input
                         type="file"
-                        accept="image/*,application/pdf"
+                        accept="image/jpeg, image/png, application/pdf"
                         hideFileInfo={true}
-                        onChange={(e) => handleFileChange(e, field)}
-                        ref={fileInputRef}
+                        onChange={handleFileChange}
                       />
-                      {(preview && field?.value?.startsWith("data:image/")) && (
-                        <div className="relative inline-block">
+                      
+                      {/* Image Preview */}
+                      {preview && fileType?.startsWith("image/") && (
+                        <div className="relative inline-block mt-2">
                           <button
                             type="button"
-                            onClick={() => {
-                              if (fileInputRef.current) {
-                                // Clear the input value
-                                fileInputRef.current.value = '';
-                                field.onChange(""); // reset the form value
-                                setPreview(null); // clear preview
-                              }
-                            }}
-                            className="absolute top-3 left-1 p-1 rounded-full bg-red-50 hover:bg-red-100 text-red-600 transition-colors"
-                            title="Clear selected file"
+                            onClick={handleClear}
+                            className="absolute top-1 right-1 p-1 rounded-full bg-red-50 hover:bg-red-100 text-red-600 z-10"
                           >
-                            <X size={7} />
+                            <X size={16} />
                           </button>
-                          <Image
-                            width={500}
-                            height={500}
+                          <img
                             src={preview}
                             alt="Preview"
-                            className="mt-2 object-cover rounded-md border"
+                            className="w-[150px] h-[150px] object-cover rounded-md border"
                           />
                         </div>
                       )}
-                      {(preview && field?.value?.startsWith("data:application/")) && (
-                        <div className="relative inline-block">
+
+                      {/* PDF Preview */}
+                      {preview && fileType === "application/pdf" && (
+                        <div className="relative inline-block mt-2">
                           <button
                             type="button"
-                            onClick={() => {
-                              if (fileInputRef.current) {
-                                // Clear the input value
-                                fileInputRef.current.value = '';
-                                field.onChange(""); // reset the form value
-                                setPreview(null); // clear preview
-                                if (pdfBlobUrl) {
-                                  URL.revokeObjectURL(pdfBlobUrl);
-                                  setPdfBlobUrl(null);
-                                }
-                              }
-                            }}
-                            className="absolute top-3 left-1 p-1 rounded-full bg-red-50 hover:bg-red-100 text-red-600 transition-colors"
+                            onClick={handleClear}
+                            className="absolute top-1 right-1 p-1 rounded-full bg-red-50 hover:bg-red-100 text-red-600 z-10 transition-colors"
                             title="Clear selected file"
                           >
-                            <X size={7} />
+                            <X size={16} />
                           </button>
                           {pdfBlobUrl ? (
                             <iframe
@@ -501,10 +531,12 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ accommodationPrice = 2100, sp
                               height="500"
                               style={{ border: 'none' }}
                               title="PDF Viewer"
-                              className="mt-2 object-cover rounded-md border"
+                              className="rounded-md border"
                             />
                           ) : (
-                            <div className="w-12 h-12 flex items-center justify-center bg-gray-100 rounded">Preview unavailable</div>
+                            <div className="w-[500px] h-[500px] flex items-center justify-center bg-gray-100 rounded border">
+                              Loading PDF...
+                            </div>
                           )}
                         </div>
                       )}
@@ -745,7 +777,7 @@ export default function Payments() {
   }, []);
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
-    console.log("onSubmit triggered");
+    // console.log("onSubmit triggered");
     try {
       const token = getAuthToken();
       const response = await post<{ success: boolean; data?: PaymentData }>(
