@@ -2,13 +2,13 @@ import { NextRequest } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import { ObjectId, GridFSBucket } from "mongodb";
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: { photoId: string } }
-) {
+export async function GET(req: NextRequest, context: any) {
+  const photoId = (context.params as { photoId: string }).photoId;
+
   const { db } = await connectToDatabase();
   const bucket = new GridFSBucket(db, { bucketName: "player-image" });
-  const id = new ObjectId(params.photoId);
+
+  const id = new ObjectId(photoId);
 
   const files = await bucket.find({ _id: id }).toArray();
   if (!files.length) return new Response("File not found", { status: 404 });
@@ -18,7 +18,6 @@ export async function GET(
 
   const nodeStream = bucket.openDownloadStream(id);
 
-  // Convert Node stream → Web ReadableStream
   const readableStream = new ReadableStream({
     start(controller) {
       nodeStream.on("data", (chunk: Buffer) => controller.enqueue(chunk));
