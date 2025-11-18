@@ -182,7 +182,40 @@
             font-weight: 500;
         }
 
-        /* Footer removed */
+        /* Footer */
+        .footer-section {
+            background-color: #f9fafb;
+            padding: 32px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .footer-text {
+            font-size: 13px;
+            line-height: 1.6;
+            color: #6b7280;
+            margin: 0 0 8px 0;
+        }
+
+        .footer-warning {
+            font-weight: 600;
+            color: #dc2626;
+            margin: 16px 0;
+        }
+
+        .footer-contacts {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .contact-item {
+            margin: 8px 0;
+        }
+
+        .contact-label {
+            font-weight: 600;
+            color: #374151;
+        }
 
         /* Responsive Design */
         @media only screen and (max-width: 600px) {
@@ -194,7 +227,9 @@
                 padding: 24px 20px;
             }
 
-            /* footer styles removed */
+            .footer-section {
+                padding: 24px 20px;
+            }
 
             h2 {
                 font-size: 20px;
@@ -250,7 +285,13 @@
                 </div>
             </div>
 
-            <!-- Footer removed -->
+            <!-- Footer Section -->
+            <div class="footer-section">
+
+                <p class="footer-text footer-warning">
+                    If you did not know of this registration, please reply to <a href="mailto:agneepath@ashoka.edu.in">agneepath@ashoka.edu.in</a>.
+                </p>
+            </div>
         </div>
     </div>
 </body>
