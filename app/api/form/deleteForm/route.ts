@@ -70,6 +70,7 @@ export async function POST(req: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
+    console.error("Error deleting form:", error);
     return NextResponse.json(
       { success: false, message: "Internal Server Error" },
       { status: 500 }

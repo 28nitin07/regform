@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Collection, ObjectId } from "mongodb";
 import { connectToDatabase } from "@/lib/mongodb";
 import { getEmailFromToken } from "@/app/utils/forms/getEmail";
 import { fetchUserData } from "@/app/utils/GetUpdateUser";
-import { ObjectId } from "mongodb";
+// unused imports removed
 import { sendPaymentConfirmationEmail } from "@/app/utils/mailer/PaymentEmail";
 
-// Interfaces
+// (removed unused helper `addFileToStrapiDatabase`)
+
+// Interfaces for data
 interface PaymentFormData {
   accommodationPrice?: number;
   accommodationPeople?: number;
@@ -121,30 +124,35 @@ export async function POST(req: NextRequest) {
       paymentData.accommodationPrice = Number(formData.get("accommodationPrice"));
     }
 
-    // Insert payment record
+    // Save to MongoDB
+    const { db } = await connectToDatabase();
+    const paymentCollection: Collection = db.collection("payments");
     const result = await paymentCollection.insertOne(paymentData);
 
     // Prepare email data
     const formDataObj: PaymentFormData = {
       name: userResponse.data?.name,
       email: email,
-      paymentMode: paymentData.paymentMode,
-      amountInNumbers: paymentData.amountInNumbers,
-      amountInWords: paymentData.amountInWords,
-      payeeName: paymentData.payeeName,
-      transactionId: paymentData.transactionId,
-      paymentDate: paymentData.paymentDate,
-      paymentProof: paymentProofId.toString(),
-      accommodationPeople: paymentData.accommodationPeople,
-      accommodationPrice: paymentData.accommodationPrice,
-      remarks: paymentData.remarks,
+      paymentMode: formData.get("paymentMode") as string,
+      amountInNumbers: parseFloat(formData.get("amountInNumbers") as string),
+      amountInWords: formData.get("amountInWords") as string,
+      payeeName: formData.get("payeeName") as string,
+      transactionId: formData.get("transactionId") as string,
+      paymentDate: new Date(formData.get("paymentDate") as string),
+      paymentProof: formData.get("paymentProof")as string,
+      accommodationPeople: Number(formData.get("accommodationPeople")),
+      accommodationPrice: Number(formData.get("accommodationPrice")),
+      remarks: formData.get("remarks") as string || undefined,
     };
 
-    // Send email confirmation (non-blocking)
+    // Send email confirmation
+    console.log("Sending confirmation email to:", email);
+    console.log("Payment proof type:", typeof formDataObj.paymentProof);
     try {
       await sendPaymentConfirmationEmail(formDataObj);
     } catch (emailErr) {
-      console.error("Email send failed:", emailErr);
+      console.error("Email send failed (non-blocking):", emailErr);
+      // Don't fail the entire request if email fails
     }
 
     return NextResponse.json(
