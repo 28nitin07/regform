@@ -32,7 +32,7 @@ interface PaymentData {
   payeeName: string;
   transactionId: string;
   paymentDate: Date;
-  paymentProof: string;
+  paymentProof: ObjectId;
   strapiId?: ObjectId;
   remarks?: string;
   ownerId: ObjectId;
@@ -40,7 +40,6 @@ interface PaymentData {
   createdAt: Date;
 }
 
-// Main POST handler
 export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
@@ -49,7 +48,7 @@ export async function POST(req: NextRequest) {
     const email = getEmailFromToken(req);
     if (!email) {
       return NextResponse.json(
-        { success: false, message: "Unauthorized: Invalid token or email not found" },
+        { success: false, message: "Unauthorized" },
         { status: 401 }
       );
     }
@@ -63,6 +62,44 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Connect to Mongo
+    const { db } = await connectToDatabase();
+    const paymentCollection = db.collection("payments");
+    const bucket = new (await import("mongodb")).GridFSBucket(db, { bucketName: "payment-proofs" });
+
+    // Handle file upload
+    const file = formData.get("paymentProof") as File;
+    if (!file || typeof file === "string") {
+      return NextResponse.json(
+        { success: false, message: "Payment proof file is required" },
+        { status: 400 }
+      );
+    }
+
+    const uploadStream = bucket.openUploadStream(file.name, {
+      contentType: file.type,
+      metadata: {
+        ownerEmail: email,
+        ownerId: userResponse.data._id.toString(),
+        contentType: file.type
+      },
+    });
+
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+
+    await new Promise<void>((resolve, reject) => {
+      uploadStream.write(buffer, (err) => {
+        if (err) return reject(err);
+        uploadStream.end(); // end without callback
+      });
+
+      uploadStream.on("finish", () => resolve());
+      uploadStream.on("error", (err) => reject(err));
+    });
+
+    const paymentProofId = uploadStream.id;
+
     // Prepare payment data
     const paymentData: PaymentData = {
       ownerId: userResponse.data._id,
@@ -74,14 +111,13 @@ export async function POST(req: NextRequest) {
       paymentDate: new Date(formData.get("paymentDate") as string),
       status: "In review",
       createdAt: new Date(),
-      paymentProof: formData.get("paymentProof") as string,
+      paymentProof: paymentProofId,
     };
 
-    // Add optional fields
+    // Optional fields
     const remarks = formData.get("remarks");
-    if (remarks) {
-      paymentData.remarks = remarks as string;
-    }
+    if (remarks) paymentData.remarks = remarks as string;
+
     const acpeople = Number(formData.get("accommodationPeople"));
     if (acpeople) {
       paymentData.accommodationPeople = acpeople;
@@ -93,7 +129,7 @@ export async function POST(req: NextRequest) {
     const paymentCollection: Collection = db.collection("payments");
     const result = await paymentCollection.insertOne(paymentData);
 
-    // Prepare data for confirmation email
+    // Prepare email data
     const formDataObj: PaymentFormData = {
       name: userResponse.data?.name,
       email: email,
@@ -129,14 +165,6 @@ export async function POST(req: NextRequest) {
     );
   } catch (error) {
     console.error("Error in payment submission:", error);
-
-    if (error instanceof SyntaxError) {
-      return NextResponse.json(
-        { success: false, message: "Invalid data format" },
-        { status: 400 }
-      );
-    }
-
     return NextResponse.json(
       { success: false, message: "Internal Server Error" },
       { status: 500 }

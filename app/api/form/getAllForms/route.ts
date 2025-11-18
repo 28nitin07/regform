@@ -1,4 +1,5 @@
 import { getEmailFromToken } from "@/app/utils/forms/getEmail";
+import { playerFields } from "@/app/utils/forms/schema";
 import { fetchUserData } from "@/app/utils/GetUpdateUser";
 import { connectToDatabase } from "@/lib/mongodb";
 import { Collection } from "mongodb";
