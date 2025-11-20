@@ -178,6 +178,22 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ sportsTotal = 0, onCompleted 
   const onSubmit = async (data: PaymentFormValues) => {
     //console.log(data);
     setPaymentFormloading(true);
+    // Validate that entered amount matches the computed total
+    const expectedTotal = sportsTotal;
+    if (Number(data.amountInNumbers) !== Number(expectedTotal)) {
+      form.setError("amountInNumbers", {
+        type: "manual",
+        message: `Amount must equal the total amount to pay: ₹${expectedTotal}`,
+      });
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: `Amount must equal the total amount to pay: ₹${expectedTotal}`,
+        className: styles["mobile-toast"],
+      });
+      setPaymentFormloading(false);
+      return;
+    }
 
     try {
       const formData = new FormData();
