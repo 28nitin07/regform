@@ -125,11 +125,14 @@ const PaymentFormSchema = z.object({
   paymentMode: z.string().nonempty({ message: "Payment mode is required." }),
   amountInNumbers: z
     .number().min(800, { message: "Amount must be atleast 800 rupees" }),
-  amountInWords: z.string()
-    .nonempty({ message: "Amount in words is required." })
-    .refine((val) => val.toLowerCase().endsWith("rupees only"), {
-      message: "Amount in words must end with 'rupees only'.",
-    }),
+  amountInWords: z.preprocess(
+    (v) => (typeof v === "string" ? v.trim() : v),
+    z.string()
+      .nonempty({ message: "Amount in words is required." })
+      .refine((val) => val.toLowerCase().endsWith("only"), {
+        message: "Amount in words must end with 'only'.",
+      })
+  ),
   payeeName: z.string().nonempty({ message: "Payee name is required." }),
   transactionId: z.string().nonempty({ message: "Transaction ID is required." }),
   paymentProof: z
@@ -400,7 +403,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ sportsTotal = 0, onCompleted 
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-lg font-bold">Total Amount in Words</FormLabel>
-                  <FormDescription>Add "only" at the end. Ex: Two thousand rupees only</FormDescription>
+                  <FormDescription>Add "only" at the end. Ex: Two thousand only</FormDescription>
                   <Input placeholder="Enter amount in words" {...field} />
                   <FormMessage />
                 </FormItem>
