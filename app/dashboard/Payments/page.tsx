@@ -180,6 +180,37 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ accommodationPrice = 2100, sp
   const [showAccommodationFields, setShowAccommodationFields] = useState(false);
   const [paymentFormloading, setPaymentFormloading] = useState<boolean>(false);
   const [resetForm, setResetForm] = useState<boolean>(false);
+  const [paymentData, setPaymentData] = useState<PaymentData>({
+    Accommodation: { needAccommodation: false },
+    submittedForms: null
+  })
+
+  useEffect(() => {
+    const fetchPaymentData = async () => {
+      try {
+        const token = getAuthToken();
+        const response = await post<{ success: boolean; data?: PaymentData, form: FormData[] }>(
+
+          `/api/payments`,
+          {
+            cookies: token,
+          }
+        );
+        if (response.data?.success) {          
+          setPaymentData(
+            response.data.data || {
+              Accommodation: { needAccommodation: false },
+              submittedForms: null,
+            }
+          );
+        }
+      } catch (err) {
+        console.error(err instanceof Error ? err.message : "Failed to fetch payment data");
+      }
+    };
+
+    fetchPaymentData();
+  }, []);
 
   const form = useForm<PaymentFormValues>({
     resolver: zodResolver(PaymentFormSchema),
@@ -214,6 +245,8 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ accommodationPrice = 2100, sp
       if (data.remarks) {
         formData.append("remarks", data.remarks);
       }
+
+      formData.append("paymentData", JSON.stringify(paymentData))
 
       const token = getAuthToken();
       if (!token) {
