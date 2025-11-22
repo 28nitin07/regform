@@ -182,7 +182,6 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ sportsTotal = 0, onCompleted 
         if (response.data?.success) {          
           setPaymentData(
             response.data.data || {
-              Accommodation: { needAccommodation: false },
               submittedForms: null,
             }
           );
