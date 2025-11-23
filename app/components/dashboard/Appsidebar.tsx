@@ -14,6 +14,7 @@ import type { Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { motion, AnimatePresence } from "framer-motion";
 
+
 import {
   Sidebar,
   SidebarContent,
@@ -101,12 +102,22 @@ const getAuthToken = (): string | null => {
 
 
   const pathname = usePathname();
+  const forceStep4 =
+  typeof window !== "undefined" &&
+  sessionStorage.getItem("forceStep4") === "true";
 
-  const currentStep =
-    pathname === "/dashboard" ? 1 :
-    pathname === "/dashboard/regForm" ? 2 :
-    pathname === "/dashboard/Payments" ? 3 :
-    4;
+
+  const currentStep = forceStep4
+  ? 4
+  : pathname === "/dashboard"
+  ? 1
+  : pathname === "/dashboard/regForm"
+  ? 2
+  : pathname === "/dashboard/Payments"
+  ? 3
+  : 4;
+
+
 
   const [items, setItems] = useState<MenuItem[]>([
     { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard, disabled: false },
@@ -256,41 +267,49 @@ const getAuthToken = (): string | null => {
 
   {/* STEP 1 */}
   <button
-    onClick={() => router.push("/dashboard")}
-    className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-400 hover:bg-gray-200"
-  >
-    1
-  </button>
-
-  <div className="flex-1 h-px bg-gray-300 mx-2"></div>
+  onClick={() => {
+    sessionStorage.removeItem("forceStep4");  // RESET
+    router.push("/dashboard");
+  }}
+  className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-400 hover:bg-gray-200"
+>
+  1
+</button>
 
   {/* STEP 2 */}
   <button
-    onClick={() => router.push("/dashboard/regForm")}
-    className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-400 hover:bg-gray-200"
-  >
-    2
-  </button>
+  onClick={() => {
+    sessionStorage.removeItem("forceStep4");  // RESET
+    router.push("/dashboard/regForm");
+  }}
+  className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-400 hover:bg-gray-200"
+>
+  2
+</button>
 
-  <div className="flex-1 h-px bg-gray-300 mx-2"></div>
 
   {/* STEP 3 */}
   <button
-    onClick={() => router.push("/dashboard/Payments")}
-    className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-400 hover:bg-gray-200"
-  >
-    3
-  </button>
+  onClick={() => {
+    sessionStorage.removeItem("forceStep4");  // RESET
+    router.push("/dashboard/Payments");
+  }}
+  className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-400 hover:bg-gray-200"
+>
+  3
+</button>
 
-  <div className="flex-1 h-px bg-gray-300 mx-2"></div>
 
-  {/* STEP 4 — sends user back to dashboard */}
   <button
-    onClick={() => router.push("/dashboard")}
-    className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-400 hover:bg-gray-200"
-  >
-    4
-  </button>
+  onClick={() => {
+    sessionStorage.setItem("forceStep4", "true");  // ENABLE
+    router.push("/dashboard");
+  }}
+  className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-400 hover:bg-gray-200"
+>
+  4
+</button>
+
 
 </div>
 
