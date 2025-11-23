@@ -7,7 +7,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { post } from "@/app/utils/PostGetData"
-import RegistrationProgress from "@/app/components/dashboard/RegistrationProgress";
+import { usePathname } from "next/navigation";
 
 import {
   Sidebar,
@@ -36,60 +36,32 @@ const getAuthToken = (): string | null => {
   return authToken ? authToken.split("=")[1] : null
 }
 
-export function AppSidebar() {
-  <div className="flex flex-col items-center gap-3 px-4 py-3">
-  <button
-    onClick={() => router.push("/dashboard")}
-    className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-400 hover:bg-gray-200"
-  >
-    1
-  </button>
 
-  <div className="w-px h-6 bg-gray-300"></div>
-
-  <button
-    onClick={() => router.push("/dashboard/regForm")}
-    className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-400 hover:bg-gray-200"
-  >
-    2
-  </button>
-
-  <div className="w-px h-6 bg-gray-300"></div>
-
-  <button
-    onClick={() => router.push("/dashboard/Payments")}
-    className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-400 hover:bg-gray-200"
-  >
-    3
-  </button>
-
-  <div className="w-px h-6 bg-gray-300"></div>
-
-  <button
-    onClick={() => router.push("#")}
-    className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-400 hover:bg-gray-200"
-  >
-    4
-  </button>
-</div>
-
-
-  const [items, setItems] = useState<MenuItem[]>([
-    // { title: "Home Page", url: "https://agneepath.co.in/", icon: Home, external: true }, // Added Home item - removed till main site is up
-    { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard, disabled: false },
-    { title: "Registration Form", url: "/dashboard/regForm", icon: BookText, disabled: false  },
-    { title: "Payments", url: "/dashboard/Payments", icon: CreditCard, disabled: true },
-    // { title: "Accomodations", url: "/dashboard/Accomodation", icon: Hotel }, // Hide accomodations temporarily till updation
-
-  ]);
+  export function AppSidebar() {
+   
 
   const router = useRouter();
+
+
+  const pathname = usePathname();
+
+  const currentStep =
+    pathname === "/dashboard" ? 1 :
+    pathname === "/dashboard/regForm" ? 2 :
+    pathname === "/dashboard/Payments" ? 3 :
+    4;
+
+  const [items, setItems] = useState<MenuItem[]>([
+    { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard, disabled: false },
+    { title: "Registration Form", url: "/dashboard/regForm", icon: BookText, disabled: false },
+    { title: "Payments", url: "/dashboard/Payments", icon: CreditCard, disabled: true },
+  ]);
   const [loading, setLoading] = useState(false)
   const [registrationDone, setRegistrationDone] = useState<boolean | null>(null)
   const [paymentDone, setPaymentDone] = useState<boolean | null>(null)
   const [hasAnyForm, setHasAnyForm] = useState<boolean>(false)
   const [hasSubmitted, setHasSubmitted] = useState<boolean>(false)
-
+  
   const handleLogout = () => {
     document.cookie = "authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
     router.push("/SignIn");
@@ -190,7 +162,10 @@ export function AppSidebar() {
   <SidebarGroupLabel>Progress</SidebarGroupLabel>
   <SidebarGroupContent>
 
-    <div className="flex items-center justify-between px-3 py-2 w-full">
+    
+  
+
+  <div className="flex items-center justify-between px-3 py-2 w-full">
 
   {/* STEP 1 */}
   <button
@@ -232,6 +207,29 @@ export function AppSidebar() {
 
 </div>
 
+<div className="w-full px-4 mt-4 flex flex-col items-center">
+
+  {/* Background bar */}
+  <div className="relative w-full h-3 bg-gray-200 rounded-full overflow-hidden cursor-pointer"
+       onClick={() => router.push("/dashboard")}>
+    
+    {/* Animated fill */}
+     <div
+                  className="absolute top-0 left-0 h-full bg-black transition-all duration-500"
+                  style={{
+                    width:
+                      currentStep === 1 ? "25%" :
+                      currentStep === 2 ? "50%" :
+                      currentStep === 3 ? "75%" :
+                      "100%"
+                  }}
+                />
+              </div>
+
+  
+
+</div>
+
 
   </SidebarGroupContent>
 </SidebarGroup>
@@ -270,4 +268,5 @@ export function AppSidebar() {
       </SidebarFooter></>}
     </Sidebar>
   );
-}
+
+  }
