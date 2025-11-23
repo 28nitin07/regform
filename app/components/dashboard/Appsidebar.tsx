@@ -107,15 +107,14 @@ const getAuthToken = (): string | null => {
   sessionStorage.getItem("forceStep4") === "true";
 
 
-  const currentStep = forceStep4
-  ? 4
-  : pathname === "/dashboard"
-  ? 1
-  : pathname === "/dashboard/regForm"
-  ? 2
-  : pathname === "/dashboard/Payments"
-  ? 3
-  : 4;
+  const currentStep = (() => {
+  if (forceStep4) return 4;
+  if (pathname === "/dashboard") return 1;
+  if (pathname.startsWith("/dashboard/regForm")) return 2;
+  if (pathname.startsWith("/dashboard/Payments")) return 3;
+  return 1;
+})();
+
 
 
 
@@ -235,17 +234,24 @@ const getAuthToken = (): string | null => {
   }, [faqOpen]);
 
     useEffect(() => {
-      // derive items so we can toggle disabled based on fetched user flags
-      setItems(items.map((it) => {
-        
-        if (it.title === "Payments") {
-          // enable payments when registration is done but payment not done
-          // adjust logic as needed; here we enable Payments only when registrationDone is true
-          return { ...it, disabled: registrationDone === null || registrationDone === false ? true : paymentDone === null ? false : !!paymentDone  };
-        }
-        return it;
-      }))
-    }, [registrationDone, paymentDone]);
+  setItems((prevItems) =>
+    prevItems.map((it) => {
+      if (it.title === "Payments") {
+        return {
+          ...it,
+          disabled:
+            registrationDone === null ||
+            registrationDone === false
+              ? true
+              : paymentDone === null
+              ? false
+              : !!paymentDone,
+        };
+      }
+      return it;
+    })
+  );
+}, [registrationDone, paymentDone]);
 
   return (
     <Sidebar>
@@ -260,85 +266,78 @@ const getAuthToken = (): string | null => {
   <SidebarGroupLabel>Progress</SidebarGroupLabel>
   <SidebarGroupContent>
 
+    <div className="flex items-center justify-between px-3 py-2 w-full">
+
+      {/* STEP 1 */}
+      <button
+        onClick={() => {
+          sessionStorage.removeItem("forceStep4");
+          router.push("/dashboard");
+        }}
+        className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-400 hover:bg-gray-200"
+      >
+        1
+      </button>
+
+      <div className="flex-1 h-px bg-gray-300 mx-2"></div>
+
+      {/* STEP 2 */}
+      <button
+        onClick={() => {
+          sessionStorage.removeItem("forceStep4");
+          router.push("/dashboard/regForm");
+        }}
+        className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-400 hover:bg-gray-200"
+      >
+        2
+      </button>
+
+      <div className="flex-1 h-px bg-gray-300 mx-2"></div>
+
+      {/* STEP 3 */}
+      <button
+        onClick={() => {
+          sessionStorage.removeItem("forceStep4");
+          router.push("/dashboard/Payments");
+        }}
+        className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-400 hover:bg-gray-200"
+      >
+        3
+      </button>
+
+      <div className="flex-1 h-px bg-gray-300 mx-2"></div>
+
+      {/* STEP 4 */}
+      <button
+        onClick={() => {
+          sessionStorage.setItem("forceStep4", "true");
+          router.push("/dashboard");
+        }}
+        className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-400 hover:bg-gray-200"
+      >
+        4
+      </button>
+
+    </div>
+
+   
     
-  
-
-  <div className="flex items-center justify-between px-3 py-2 w-full">
-
-  {/* STEP 1 */}
-  <button
-  onClick={() => {
-    sessionStorage.removeItem("forceStep4");  // RESET
-    router.push("/dashboard");
+      <div className="relative w-full h-3 bg-gray-200 rounded-full overflow-hidden">
+        <div
+  className="absolute top-0 left-0 h-full bg-black transition-all duration-500"
+  style={{
+    width:
+      currentStep === 1 ? "0%" :      // Step 1 → 0%
+      currentStep === 2 ? "30%" :     // Step 2 → 30%
+      currentStep === 3 ? "60%" :     // Step 3 → 60%
+      "100%"                          // Step 4 → 100%
   }}
-  className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-400 hover:bg-gray-200"
->
-  1
-</button>
-
-  {/* STEP 2 */}
-  <button
-  onClick={() => {
-    sessionStorage.removeItem("forceStep4");  // RESET
-    router.push("/dashboard/regForm");
-  }}
-  className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-400 hover:bg-gray-200"
->
-  2
-</button>
-
-
-  {/* STEP 3 */}
-  <button
-  onClick={() => {
-    sessionStorage.removeItem("forceStep4");  // RESET
-    router.push("/dashboard/Payments");
-  }}
-  className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-400 hover:bg-gray-200"
->
-  3
-</button>
-
-
-  <button
-  onClick={() => {
-    sessionStorage.setItem("forceStep4", "true");  // ENABLE
-    router.push("/dashboard");
-  }}
-  className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-400 hover:bg-gray-200"
->
-  4
-</button>
-
-
-</div>
-
-<div className="w-full px-4 mt-4 flex flex-col items-center">
-
-  {/* Background bar */}
-  <div className="relative w-full h-3 bg-gray-200 rounded-full overflow-hidden cursor-pointer"
-       onClick={() => router.push("/dashboard")}>
-    
-    {/* Animated fill */}
-     <div
-                  className="absolute top-0 left-0 h-full bg-black transition-all duration-500"
-                  style={{
-                    width:
-                      currentStep === 1 ? "25%" :
-                      currentStep === 2 ? "50%" :
-                      currentStep === 3 ? "75%" :
-                      "100%"
-                  }}
-                />
-              </div>
-
-  
-
-</div>
-
+/>
+    </div>
 
   </SidebarGroupContent>
 </SidebarGroup>
+
 
         <SidebarGroup>
           <SidebarGroupLabel>Menu</SidebarGroupLabel>
