@@ -60,7 +60,7 @@ const MarkdownComponents: Components = {
   li: ({ children }) => <li className="pl-2">{children}</li>,
   p: ({ children }) => <p className="my-4">{children}</p>,
   h1: ({ children }) => (
-    <h1 className="text-2xl font-bold my-4">{children}</h1>
+    <h1 className="text-2xl font-bold my-4 hidden">{children}</h1>
   ),
   h2: ({ children }) => (
     <h2 className="text-xl font-bold my-3">{children}</h2>
