@@ -635,7 +635,7 @@ const maxDate = new Date(2009, 1, 1); // On or before 1 Feb 2009
 
       if (baseSchema instanceof ZodEffects) {
         baseSchema = baseSchema._def.schema;
-        const metaType = getNestedMetaValue(meta, metafieldpath, "type");
+        /*const metaType = getNestedMetaValue(meta, metafieldpath, "type");
         if (metaType === "photo" || fieldPath.endsWith("photo")) {
           return (
             <FormFile
@@ -645,7 +645,7 @@ const maxDate = new Date(2009, 1, 1); // On or before 1 Feb 2009
               accept={getNestedMetaValue(meta, metafieldpath, "accept") as string}
             />
           );
-        }
+        }*/
       }
 
       if (baseSchema instanceof ZodString) {
