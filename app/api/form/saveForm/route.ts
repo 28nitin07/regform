@@ -258,7 +258,7 @@ if (!isDraft) {
 
   // Sync to Google Sheets (event-driven, non-blocking)
   syncFormSubmission(formId).catch(err => {
-    console.error("[Sheets] Background sync failed:", err);
+    console.error("[Sheets] Form sync failed (non-blocking):", err.message || err);
     // Don't throw - allow form submission to succeed even if sheets sync fails
   });
 }

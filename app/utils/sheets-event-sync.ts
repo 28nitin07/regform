@@ -7,15 +7,72 @@ import { ObjectId } from "mongodb";
  * Much more efficient than continuous polling
  */
 
-interface SheetRow {
-  [key: string]: string | number;
+// Feature flag from environment
+const SHEETS_SYNC_ENABLED = process.env.SHEETS_SYNC_ENABLED !== 'false';
+
+interface SyncResult {
+  success: boolean;
+  error?: string;
+}
+
+interface InitialSyncResult extends SyncResult {
+  counts?: {
+    forms: number;
+    users: number;
+    payments: number;
+  };
+}
+
+interface SheetConfig {
+  name: string;
+  headers: string[];
+}
+
+const SHEET_CONFIGS: Record<string, SheetConfig> = {
+  forms: {
+    name: "Sheet1",
+    headers: ["Form ID", "Owner ID", "Sport/Event", "Status", "Created At", "Updated At", "Player Count", "Player Names", "Coach Name", "Coach Contact"]
+  },
+  users: {
+    name: "Users",
+    headers: ["User ID", "Name", "Email", "University", "Verified", "Registration Done", "Payment Done", "Created At"]
+  },
+  payments: {
+    name: "Payments",
+    headers: ["Payment ID", "Owner ID", "Amount (Numbers)", "Amount (Words)", "Payment Mode", "Transaction ID", "Payee Name", "Payment Date", "Status", "Created At"]
+  }
+};
+
+/**
+ * Format date safely - handles both Date objects and strings
+ */
+function formatDate(dateValue: unknown): string {
+  if (!dateValue) return "";
+  try {
+    const date = dateValue instanceof Date ? dateValue : new Date(dateValue as string);
+    return date.toLocaleString('en-US', { 
+      timeZone: 'Asia/Kolkata',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    });
+  } catch {
+    return String(dateValue);
+  }
 }
 
 /**
  * Sync a single form submission to Google Sheets
  * Called when a form is submitted
  */
-export async function syncFormSubmission(formId: string) {
+export async function syncFormSubmission(formId: string): Promise<SyncResult> {
+  if (!SHEETS_SYNC_ENABLED) {
+    return { success: false, error: "Sheets sync is disabled" };
+  }
+
   try {
     const { db } = await connectToDatabase();
     const form = await db.collection("form").findOne({ _id: new ObjectId(formId) });
@@ -33,18 +90,18 @@ export async function syncFormSubmission(formId: string) {
     const row = [
       form._id.toString(),
       form.ownerId ? form.ownerId.toString() : "",
-      form.title || "",
-      form.status || "",
-      form.createdAt ? new Date(form.createdAt as string).toLocaleString() : "",
-      form.updatedAt ? new Date(form.updatedAt as string).toLocaleString() : "",
-      playerFields.length,
-      playerFields.map((p: Record<string, unknown>) => (p.name || p.playerName || "") as string).join(", "),
-      coachFields.name || "",
-      coachFields.contact || coachFields.phone || ""
+      String(form.title || ""),
+      String(form.status || ""),
+      formatDate(form.createdAt),
+      formatDate(form.updatedAt),
+      playerFields.length.toString(),
+      playerFields.map((p: Record<string, unknown>) => String(p.name || p.playerName || "")).join(", "),
+      String(coachFields.name || ""),
+      String(coachFields.contact || coachFields.phone || "")
     ];
 
     // Append to Google Sheet
-    await appendToSheet("Sheet1", [row]);
+    await appendToSheet(SHEET_CONFIGS.forms.name, [row]);
 
     console.log(`[Sheets] ✅ Synced form submission: ${formId}`);
     return { success: true };
@@ -60,7 +117,11 @@ export async function syncFormSubmission(formId: string) {
  * Sync a user registration to Google Sheets
  * Called when a new user registers
  */
-export async function syncUserRegistration(userId: string) {
+export async function syncUserRegistration(userId: string): Promise<SyncResult> {
+  if (!SHEETS_SYNC_ENABLED) {
+    return { success: false, error: "Sheets sync is disabled" };
+  }
+
   try {
     const { db } = await connectToDatabase();
     const user = await db.collection("users").findOne({ _id: new ObjectId(userId) });
@@ -72,16 +133,16 @@ export async function syncUserRegistration(userId: string) {
 
     const row = [
       user._id.toString(),
-      user.name || "",
-      user.email || "",
-      user.university || "",
+      String(user.name || ""),
+      String(user.email || ""),
+      String(user.university || ""),
       user.verified ? "Yes" : "No",
       user.registrationDone ? "Yes" : "No",
       user.paymentDone ? "Yes" : "No",
-      user.createdAt ? new Date(user.createdAt as string).toLocaleString() : ""
+      formatDate(user.createdAt)
     ];
 
-    await appendToSheet("Users", [row]);
+    await appendToSheet(SHEET_CONFIGS.users.name, [row]);
 
     console.log(`[Sheets] ✅ Synced user registration: ${userId}`);
     return { success: true };
@@ -97,7 +158,11 @@ export async function syncUserRegistration(userId: string) {
  * Sync a payment submission to Google Sheets
  * Called when a payment is submitted
  */
-export async function syncPaymentSubmission(paymentId: string) {
+export async function syncPaymentSubmission(paymentId: string): Promise<SyncResult> {
+  if (!SHEETS_SYNC_ENABLED) {
+    return { success: false, error: "Sheets sync is disabled" };
+  }
+
   try {
     const { db } = await connectToDatabase();
     const payment = await db.collection("payments").findOne({ _id: new ObjectId(paymentId) });
@@ -110,17 +175,17 @@ export async function syncPaymentSubmission(paymentId: string) {
     const row = [
       payment._id.toString(),
       payment.ownerId ? payment.ownerId.toString() : "",
-      payment.amountInNumbers || "",
-      payment.amountInWords || "",
-      payment.paymentMode || "",
-      payment.transactionId || "",
-      payment.payeeName || "",
-      payment.paymentDate ? new Date(payment.paymentDate as string).toLocaleString() : "",
-      payment.status || "",
-      payment.createdAt ? new Date(payment.createdAt as string).toLocaleString() : ""
+      String(payment.amountInNumbers || ""),
+      String(payment.amountInWords || ""),
+      String(payment.paymentMode || ""),
+      String(payment.transactionId || ""),
+      String(payment.payeeName || ""),
+      formatDate(payment.paymentDate),
+      String(payment.status || ""),
+      formatDate(payment.createdAt)
     ];
 
-    await appendToSheet("Payments", [row]);
+    await appendToSheet(SHEET_CONFIGS.payments.name, [row]);
 
     console.log(`[Sheets] ✅ Synced payment: ${paymentId}`);
     return { success: true };
@@ -133,44 +198,127 @@ export async function syncPaymentSubmission(paymentId: string) {
 }
 
 /**
- * Helper function to append rows to a specific sheet
+ * Create authenticated Google Sheets client
  */
-async function appendToSheet(sheetName: string, rows: (string | number)[][]) {
-  try {
-    // Check if credentials are configured
-    if (!process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || 
-        !process.env.GOOGLE_PRIVATE_KEY || 
-        !process.env.GOOGLE_SHEET_ID) {
-      console.warn("[Sheets] Credentials not configured, skipping sync");
-      return { success: false, error: "Credentials not configured" };
+function createSheetsClient() {
+  if (!process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || 
+      !process.env.GOOGLE_PRIVATE_KEY || 
+      !process.env.GOOGLE_SHEET_ID) {
+    throw new Error("Google Sheets credentials not configured. Set GOOGLE_SERVICE_ACCOUNT_EMAIL, GOOGLE_PRIVATE_KEY, and GOOGLE_SHEET_ID");
+  }
+
+  const auth = new google.auth.GoogleAuth({
+    credentials: {
+      client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+      private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+    },
+    scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+  });
+
+  return {
+    sheets: google.sheets({ version: 'v4', auth }),
+    spreadsheetId: process.env.GOOGLE_SHEET_ID
+  };
+}
+
+/**
+ * Helper function to append rows to a specific sheet with retry logic
+ */
+async function appendToSheet(sheetName: string, rows: string[][], maxRetries = 3): Promise<void> {
+  let lastError: Error | undefined;
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const { sheets, spreadsheetId } = createSheetsClient();
+
+      // Append rows (doesn't overwrite existing data)
+      await sheets.spreadsheets.values.append({
+        spreadsheetId,
+        range: `${sheetName}!A:Z`,
+        valueInputOption: 'RAW',
+        requestBody: {
+          values: rows
+        },
+      });
+
+      return; // Success
+
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+      
+      // Don't retry on credential/configuration errors
+      if (lastError.message.includes('credentials') || 
+          lastError.message.includes('not found') ||
+          lastError.message.includes('permission')) {
+        throw lastError;
+      }
+
+      // Retry with exponential backoff for transient errors
+      if (attempt < maxRetries) {
+        const backoffMs = Math.pow(2, attempt - 1) * 1000;
+        console.warn(`[Sheets] Attempt ${attempt}/${maxRetries} failed, retrying in ${backoffMs}ms...`);
+        await new Promise(resolve => setTimeout(resolve, backoffMs));
+      }
     }
+  }
 
-    const auth = new google.auth.GoogleAuth({
-      credentials: {
-        client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-        private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-      },
-      scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+  throw lastError || new Error("Failed to append to sheet after retries");
+}
+
+/**
+ * Get all sheet IDs from the spreadsheet
+ */
+async function getSheetIds(sheets: ReturnType<typeof google.sheets>, spreadsheetId: string): Promise<Record<string, number>> {
+  try {
+    const response = await sheets.spreadsheets.get({ spreadsheetId });
+    const sheetIds: Record<string, number> = {};
+    
+    response.data.sheets?.forEach(sheet => {
+      const title = sheet.properties?.title;
+      const id = sheet.properties?.sheetId;
+      if (title && id !== undefined && id !== null) {
+        sheetIds[title] = id;
+      }
     });
-
-    const sheets = google.sheets({ version: 'v4', auth });
-    const spreadsheetId = process.env.GOOGLE_SHEET_ID;
-
-    // Append rows (doesn't overwrite existing data)
-    await sheets.spreadsheets.values.append({
-      spreadsheetId,
-      range: `${sheetName}!A:Z`,
-      valueInputOption: 'RAW',
-      requestBody: {
-        values: rows
-      },
-    });
-
-    return { success: true };
-
+    
+    return sheetIds;
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    throw new Error(errorMessage);
+    console.warn("[Sheets] Could not fetch sheet IDs for formatting:", error);
+    return {};
+  }
+}
+
+/**
+ * Format sheet headers (bold + gray background)
+ */
+async function formatHeaders(sheets: ReturnType<typeof google.sheets>, spreadsheetId: string, sheetIds: Record<string, number>): Promise<void> {
+  try {
+    const requests = Object.entries(sheetIds).map(([sheetName, sheetId]) => ({
+      repeatCell: {
+        range: {
+          sheetId,
+          startRowIndex: 0,
+          endRowIndex: 1,
+        },
+        cell: {
+          userEnteredFormat: {
+            textFormat: { bold: true },
+            backgroundColor: { red: 0.9, green: 0.9, blue: 0.9 }
+          }
+        },
+        fields: 'userEnteredFormat(textFormat,backgroundColor)'
+      }
+    }));
+
+    if (requests.length > 0) {
+      await sheets.spreadsheets.batchUpdate({
+        spreadsheetId,
+        requestBody: { requests }
+      });
+      console.log("[Sheets] ✅ Headers formatted");
+    }
+  } catch (error) {
+    console.warn("[Sheets] Could not format headers (non-critical):", error);
   }
 }
 
@@ -178,33 +326,15 @@ async function appendToSheet(sheetName: string, rows: (string | number)[][]) {
  * Initial sync - run once to populate existing data
  * Only call this manually when setting up or recovering data
  */
-export async function initialFullSync() {
+export async function initialFullSync(): Promise<InitialSyncResult> {
   try {
     const { db } = await connectToDatabase();
-
-    // Check credentials
-    if (!process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || 
-        !process.env.GOOGLE_PRIVATE_KEY || 
-        !process.env.GOOGLE_SHEET_ID) {
-      throw new Error("Google Sheets credentials not configured");
-    }
-
-    const auth = new google.auth.GoogleAuth({
-      credentials: {
-        client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-        private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-      },
-      scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-    });
-
-    const sheets = google.sheets({ version: 'v4', auth });
-    const spreadsheetId = process.env.GOOGLE_SHEET_ID;
+    const { sheets, spreadsheetId } = createSheetsClient();
 
     // Sync forms
     console.log("[Sheets] Syncing forms...");
     const forms = await db.collection("form").find({}).toArray();
     if (forms.length > 0) {
-      const formHeaders = ["Form ID", "Owner ID", "Sport/Event", "Status", "Created At", "Updated At", "Player Count", "Player Names", "Coach Name", "Coach Contact"];
       const formRows = forms.map(doc => {
         const fields = doc.fields as Record<string, unknown> | undefined;
         const playerFields = (fields?.playerFields as Record<string, unknown>[]) || [];
@@ -213,28 +343,28 @@ export async function initialFullSync() {
         return [
           doc._id.toString(),
           doc.ownerId ? doc.ownerId.toString() : "",
-          doc.title || "",
-          doc.status || "",
-          doc.createdAt ? new Date(doc.createdAt).toLocaleString() : "",
-          doc.updatedAt ? new Date(doc.updatedAt).toLocaleString() : "",
-          playerFields.length,
-          playerFields.map((p: Record<string, unknown>) => (p.name || p.playerName || "") as string).join(", "),
-          coachFields.name || "",
-          coachFields.contact || coachFields.phone || ""
+          String(doc.title || ""),
+          String(doc.status || ""),
+          formatDate(doc.createdAt),
+          formatDate(doc.updatedAt),
+          playerFields.length.toString(),
+          playerFields.map((p: Record<string, unknown>) => String(p.name || p.playerName || "")).join(", "),
+          String(coachFields.name || ""),
+          String(coachFields.contact || coachFields.phone || "")
         ];
       });
 
       await sheets.spreadsheets.values.clear({
         spreadsheetId,
-        range: `Sheet1!A1:ZZ`,
+        range: `${SHEET_CONFIGS.forms.name}!A1:ZZ`,
       });
 
       await sheets.spreadsheets.values.update({
         spreadsheetId,
-        range: `Sheet1!A1`,
+        range: `${SHEET_CONFIGS.forms.name}!A1`,
         valueInputOption: 'RAW',
         requestBody: {
-          values: [formHeaders, ...formRows]
+          values: [SHEET_CONFIGS.forms.headers, ...formRows]
         },
       });
 
@@ -245,29 +375,28 @@ export async function initialFullSync() {
     console.log("[Sheets] Syncing users...");
     const users = await db.collection("users").find({}).toArray();
     if (users.length > 0) {
-      const userHeaders = ["User ID", "Name", "Email", "University", "Verified", "Registration Done", "Payment Done", "Created At"];
       const userRows = users.map(doc => [
         doc._id.toString(),
-        doc.name || "",
-        doc.email || "",
-        doc.university || "",
+        String(doc.name || ""),
+        String(doc.email || ""),
+        String(doc.university || ""),
         doc.verified ? "Yes" : "No",
         doc.registrationDone ? "Yes" : "No",
         doc.paymentDone ? "Yes" : "No",
-        doc.createdAt ? new Date(doc.createdAt).toLocaleString() : ""
+        formatDate(doc.createdAt)
       ]);
 
       await sheets.spreadsheets.values.clear({
         spreadsheetId,
-        range: `Users!A1:ZZ`,
+        range: `${SHEET_CONFIGS.users.name}!A1:ZZ`,
       });
 
       await sheets.spreadsheets.values.update({
         spreadsheetId,
-        range: `Users!A1`,
+        range: `${SHEET_CONFIGS.users.name}!A1`,
         valueInputOption: 'RAW',
         requestBody: {
-          values: [userHeaders, ...userRows]
+          values: [SHEET_CONFIGS.users.headers, ...userRows]
         },
       });
 
@@ -278,62 +407,49 @@ export async function initialFullSync() {
     console.log("[Sheets] Syncing payments...");
     const payments = await db.collection("payments").find({}).toArray();
     if (payments.length > 0) {
-      const paymentHeaders = ["Payment ID", "Owner ID", "Amount (Numbers)", "Amount (Words)", "Payment Mode", "Transaction ID", "Payee Name", "Payment Date", "Status", "Created At"];
       const paymentRows = payments.map(doc => [
         doc._id.toString(),
         doc.ownerId ? doc.ownerId.toString() : "",
-        doc.amountInNumbers || "",
-        doc.amountInWords || "",
-        doc.paymentMode || "",
-        doc.transactionId || "",
-        doc.payeeName || "",
-        doc.paymentDate ? new Date(doc.paymentDate).toLocaleString() : "",
-        doc.status || "",
-        doc.createdAt ? new Date(doc.createdAt).toLocaleString() : ""
+        String(doc.amountInNumbers || ""),
+        String(doc.amountInWords || ""),
+        String(doc.paymentMode || ""),
+        String(doc.transactionId || ""),
+        String(doc.payeeName || ""),
+        formatDate(doc.paymentDate),
+        String(doc.status || ""),
+        formatDate(doc.createdAt)
       ]);
 
       await sheets.spreadsheets.values.clear({
         spreadsheetId,
-        range: `Payments!A1:ZZ`,
+        range: `${SHEET_CONFIGS.payments.name}!A1:ZZ`,
       });
 
       await sheets.spreadsheets.values.update({
         spreadsheetId,
-        range: `Payments!A1`,
+        range: `${SHEET_CONFIGS.payments.name}!A1`,
         valueInputOption: 'RAW',
         requestBody: {
-          values: [paymentHeaders, ...paymentRows]
+          values: [SHEET_CONFIGS.payments.headers, ...paymentRows]
         },
       });
 
       console.log(`[Sheets] ✅ Synced ${payments.length} payments`);
     }
 
-    // Format headers
-    await sheets.spreadsheets.batchUpdate({
-      spreadsheetId,
-      requestBody: {
-        requests: [{
-          repeatCell: {
-            range: {
-              sheetId: 0,
-              startRowIndex: 0,
-              endRowIndex: 1,
-            },
-            cell: {
-              userEnteredFormat: {
-                textFormat: { bold: true },
-                backgroundColor: { red: 0.9, green: 0.9, blue: 0.9 }
-              }
-            },
-            fields: 'userEnteredFormat(textFormat,backgroundColor)'
-          }
-        }]
-      }
-    });
+    // Format headers for all sheets
+    const sheetIds = await getSheetIds(sheets, spreadsheetId);
+    await formatHeaders(sheets, spreadsheetId, sheetIds);
 
     console.log("[Sheets] ✅ Initial sync completed");
-    return { success: true, counts: { forms: forms.length, users: users.length, payments: payments.length } };
+    return { 
+      success: true, 
+      counts: { 
+        forms: forms.length, 
+        users: users.length, 
+        payments: payments.length 
+      } 
+    };
 
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);

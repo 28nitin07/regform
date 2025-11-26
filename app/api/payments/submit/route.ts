@@ -135,7 +135,7 @@ export async function POST(req: NextRequest) {
 
     // Sync to Google Sheets (event-driven, non-blocking)
     syncPaymentSubmission(insertedId).catch(err => {
-      console.error("[Sheets] Background sync failed:", err);
+      console.error("[Sheets] Payment sync failed (non-blocking):", err.message || err);
       // Don't throw - allow payment submission to succeed even if sheets sync fails
     });
 
