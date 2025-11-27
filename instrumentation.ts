@@ -6,18 +6,8 @@
 
 export async function register() {
   if (process.env.NEXT_RUNTIME === 'nodejs') {
-    // Dynamic import to avoid bundling issues
-    const { startAutoSync } = await import('./app/utils/sheets-sync-service');
-    
-    console.log('[Instrumentation] Server started, initializing auto-sync...');
-    
-    // Wait a bit for MongoDB connection to be ready
-    setTimeout(() => {
-      if (process.env.AUTO_SYNC_ENABLED === 'true' || process.env.NODE_ENV === 'development') {
-        startAutoSync();
-      } else {
-        console.log('[Instrumentation] Auto-sync disabled. Set AUTO_SYNC_ENABLED=true to enable.');
-      }
-    }, 3000);
+    console.log('[Instrumentation] Server started');
+    console.log('[Instrumentation] Using event-driven Google Sheets sync (no polling)');
+    console.log('[Instrumentation] Data will sync automatically when inserted/updated in MongoDB');
   }
 }

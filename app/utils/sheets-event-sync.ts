@@ -30,7 +30,7 @@ interface SheetConfig {
 
 const SHEET_CONFIGS: Record<string, SheetConfig> = {
   forms: {
-    name: "Sheet1",
+    name: "Registrations",
     headers: ["Form ID", "Owner ID", "Sport/Event", "Status", "Created At", "Updated At", "Player Count", "Player Names", "Coach Name", "Coach Contact"]
   },
   users: {
