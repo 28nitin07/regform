@@ -136,7 +136,7 @@ export async function syncUserRegistration(userId: string): Promise<SyncResult> 
       String(user.name || ""),
       String(user.email || ""),
       String(user.university || ""),
-      user.verified ? "Yes" : "No",
+      user.emailVerified ? "Yes" : "No",
       user.registrationDone ? "Yes" : "No",
       user.paymentDone ? "Yes" : "No",
       formatDate(user.createdAt)
