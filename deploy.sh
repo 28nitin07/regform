@@ -7,13 +7,15 @@ echo "🚀 Starting deployment..."
 cd /mnt/HC_Volume_103871510/host/regform || exit 1
 
 # Pull latest changes (if using git)
+echo "📥 Fetching latest changes from repository..."
+git fetch origin || echo "⚠️  Git fetch failed"
+
 echo "📥 Pulling latest changes..."
-git fetch || echo "Fetching git origin from repository..."
-git pull || echo "⚠️  No git repository or pull failed"
+git pull origin main || echo "⚠️  No git repository or pull failed"
 
 # Install dependencies
 echo "📦 Installing dependencies..."
-npm install --production=false
+npm install --omit=dev
 
 # Build the application
 echo "🔨 Building application..."
