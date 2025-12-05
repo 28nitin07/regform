@@ -1,5 +1,6 @@
 #!/bin/bash
 # Deployment script for production server
+# Location: /mnt/HC_Volume_103871510/host/regform/scripts/deploy.sh
 
 echo "🚀 Starting deployment..."
 

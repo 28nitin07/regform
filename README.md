@@ -34,3 +34,23 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Scripts
+
+All automation scripts are in [`scripts/`](./scripts/):
+
+| Script | Purpose |
+|--------|---------|
+| `setup-local.sh` | Local development environment setup |
+| `deploy.sh` | Production deployment automation |
+| `backup.sh` | Automated backup (MongoDB + files) |
+| `restore.sh` | Interactive backup restoration |
+| `setup-backup.sh` | One-time backup automation setup |
+
+**Quick start:** See [`scripts/README.md`](./scripts/README.md)
+
+## Documentation
+
+- [`BACKUP_SYSTEM.md`](./BACKUP_SYSTEM.md) - Complete backup system guide
+- [`RAILWAY_MYSQL_SETUP.md`](./RAILWAY_MYSQL_SETUP.md) - Database setup
+- [`VERCEL_DEPLOYMENT.md`](./VERCEL_DEPLOYMENT.md) - Alternative deployment options

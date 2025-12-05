@@ -6,6 +6,8 @@ Comprehensive backup system for RegForm application with dual backup locations:
 - **Local Server**: Fast access, 30-day retention
 - **Google Drive**: Cloud redundancy, 90-day retention
 
+**All scripts located in:** `/mnt/HC_Volume_103871510/host/regform/scripts/`
+
 ## Components
 
 ### 1. `backup.sh` - Main Backup Script
@@ -33,7 +35,7 @@ Features:
 ### On Server:
 
 ```bash
-cd /mnt/HC_Volume_103871510/host/regform
+cd /mnt/HC_Volume_103871510/host/regform/scripts
 
 # Make setup script executable
 chmod +x setup-backup.sh
@@ -98,12 +100,12 @@ Backups/RegForm/
 
 ### Run Backup Manually:
 ```bash
-/mnt/HC_Volume_103871510/host/regform/backup.sh
+/mnt/HC_Volume_103871510/host/regform/scripts/backup.sh
 ```
 
 ### Restore from Backup:
 ```bash
-/mnt/HC_Volume_103871510/host/regform/restore.sh
+/mnt/HC_Volume_103871510/host/regform/scripts/restore.sh
 ```
 
 ### View Backup Logs:
@@ -147,6 +149,7 @@ crontab -e
 
 ### Scenario 1: Restore Latest Backup
 ```bash
+cd /mnt/HC_Volume_103871510/host/regform/scripts
 ./restore.sh
 # Choose: 5 (List backups)
 # Note the latest filenames
@@ -156,6 +159,7 @@ crontab -e
 
 ### Scenario 2: Restore from Google Drive
 ```bash
+cd /mnt/HC_Volume_103871510/host/regform/scripts
 ./restore.sh
 # Choose: 4 (Download from Google Drive)
 # Select backup
@@ -164,6 +168,7 @@ crontab -e
 
 ### Scenario 3: Restore Only Database
 ```bash
+cd /mnt/HC_Volume_103871510/host/regform/scripts
 ./restore.sh
 # Choose: 1 (Restore MongoDB only)
 # Enter backup filename

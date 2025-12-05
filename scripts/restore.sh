@@ -1,5 +1,6 @@
 #!/bin/bash
 # Restore Script for MongoDB and Uploaded Files
+# Location: /mnt/HC_Volume_103871510/host/regform/scripts/restore.sh
 
 set -e  # Exit on error
 

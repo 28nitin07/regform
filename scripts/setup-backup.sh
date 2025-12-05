@@ -1,7 +1,7 @@
 #!/bin/bash
 # Setup automated backups with cron
 
-SCRIPT_DIR="/mnt/HC_Volume_103871510/host/regform"
+SCRIPT_DIR="/mnt/HC_Volume_103871510/host/regform/scripts"
 BACKUP_SCRIPT="$SCRIPT_DIR/backup.sh"
 
 echo "🔧 Setting up automated backup system..."
@@ -89,5 +89,6 @@ echo "📖 Usage:"
 echo "   Manual backup:  $BACKUP_SCRIPT"
 echo "   Restore backup: $SCRIPT_DIR/restore.sh"
 echo "   View logs:      tail -f /mnt/HC_Volume_103871510/backups/regform/logs/backup_*.log"
+echo "   Deploy app:     $SCRIPT_DIR/deploy.sh"
 echo "   List cron jobs: crontab -l"
 echo ""
