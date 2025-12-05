@@ -23,8 +23,9 @@ npm install
 echo "🔧 Rebuilding native modules..."
 npm rebuild bcrypt
 
-# Build the application
+# Build the application with increased memory
 echo "🔨 Building application..."
+export NODE_OPTIONS="--max-old-space-size=4096"
 npm run build
 
 # Restart with PM2
