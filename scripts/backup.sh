@@ -79,7 +79,7 @@ log "📁 Backing up uploaded files from: $UPLOAD_PATH"
 if [ -d "$UPLOAD_PATH" ]; then
     UPLOADS_BACKUP_PATH="$BACKUP_DIR/uploads/$DATE_DIR/uploads_${TIMESTAMP}.tar.gz"
     
-    if tar -czf "$UPLOADS_BACKUP_PATH" -C "$(dirname $UPLOAD_PATH)" "$(basename $UPLOAD_PATH)" 2>/dev/null; then
+    if tar -czf "$UPLOADS_BACKUP_PATH" -C "$(dirname "$UPLOAD_PATH")" "$(basename "$UPLOAD_PATH")" 2>/dev/null; then
         UPLOADS_SIZE=$(du -h "$UPLOADS_BACKUP_PATH" | cut -f1)
         log "✅ Uploads backup completed: uploads_${TIMESTAMP}.tar.gz ($UPLOADS_SIZE)"
     else
