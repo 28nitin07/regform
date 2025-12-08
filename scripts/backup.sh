@@ -95,17 +95,23 @@ fi
 
 log "⚙️  Backing up configuration files"
 
-CONFIG_BACKUP_PATH="$BACKUP_DIR/config_${TIMESTAMP}.tar.gz"
+CONFIG_BACKUP_PATH="$BACKUP_DIR/config_${TIMESTAMP}.tar.gz.gpg"
 cd "$PROJECT_DIR"
 
-if tar -czf "$CONFIG_BACKUP_PATH" \
-    .env.production \
-    package.json \
-    next.config.ts \
-    2>/dev/null; then
-    log "✅ Config backup completed"
+if command -v gpg &> /dev/null; then
+    if [ -z "$CONFIG_BACKUP_PASSPHRASE" ]; then
+        log "⚠️  CONFIG_BACKUP_PASSPHRASE not set. Skipping encrypted config backup."
+    else
+        tar -cz .env.production package.json next.config.ts 2>/dev/null | \
+            gpg --batch --yes --passphrase "$CONFIG_BACKUP_PASSPHRASE" --symmetric --cipher-algo AES256 -o "$CONFIG_BACKUP_PATH"
+        if [ $? -eq 0 ]; then
+            log "✅ Encrypted config backup completed: $(basename "$CONFIG_BACKUP_PATH")"
+        else
+            log "⚠️  Encrypted config backup failed"
+        fi
+    fi
 else
-    log "⚠️  Config backup skipped"
+    log "⚠️  gpg not found, skipping encrypted config backup"
 fi
 
 # ============================================
