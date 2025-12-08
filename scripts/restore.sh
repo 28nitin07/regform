@@ -133,10 +133,10 @@ download_from_gdrive() {
     read -p "Enter the backup filename to download: " filename
     
     local local_path="$BACKUP_DIR/mongodb/restored/$filename"
-    mkdir -p "$(dirname $local_path)"
+    mkdir -p "$(dirname "$local_path")"
     
     echo "📥 Downloading from Google Drive..."
-    if rclone copy "$GDRIVE_REMOTE/mongodb/$filename" "$(dirname $local_path)" --progress; then
+    if rclone copy "$GDRIVE_REMOTE/mongodb/$filename" "$(dirname "$local_path")" --progress; then
         echo "✅ Downloaded: $local_path"
         echo "$local_path"
     else
