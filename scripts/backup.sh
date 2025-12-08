@@ -10,14 +10,14 @@ set -e  # Exit on error
 # ============================================
 
 # Paths
-PROJECT_DIR="/mnt/HC_Volume_103871510/host/regform"
-BACKUP_DIR="/mnt/HC_Volume_103871510/backups/regform"
+PROJECT_DIR="$HOME/regform"
+BACKUP_DIR="$HOME/backups/regform"
 MONGODB_URI="mongodb://127.0.0.1:27017/production"
 DB_NAME="production"
-UPLOAD_PATH="/mnt/HC_Volume_103871510/host/StrapiMongoDB/public/uploads"
+UPLOAD_PATH="$HOME/regform/public/uploads"
 
 # Google Drive (using rclone)
-GDRIVE_REMOTE="agneepath-gdrive:Backups/RegForm"  # Configure rclone remote named 'agneepath-gdrive'
+GDRIVE_REMOTE="agneepath-gdrive:server-backups"  # Configure rclone remote named 'agneepath-gdrive'
 
 # Retention (days)
 LOCAL_RETENTION_DAYS=30
