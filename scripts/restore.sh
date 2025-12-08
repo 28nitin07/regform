@@ -35,6 +35,73 @@ list_backups() {
         size=$(du -h "$path" | cut -f1)
         echo "  $date - $(basename $path) ($size)"
     done
+    
+    echo ""
+    echo "Config Backups (encrypted):"
+    find "$BACKUP_DIR" -maxdepth 1 -name "config_*.tar.gz.gpg" -type f -printf "%T@ %p\n" | sort -rn | head -10 | while read timestamp path; do
+        date=$(date -d @${timestamp%.*} "+%Y-%m-%d %H:%M:%S")
+        size=$(du -h "$path" | cut -f1)
+        echo "  $date - $(basename $path) ($size)"
+    done
+}
+
+restore_config() {
+    local backup_file="$1"
+    local project_dir="${2:-/mnt/HC_Volume_103871510/host/regform}"
+    
+    echo "🔄 Restoring config from: $(basename $backup_file)"
+    
+    # Check if file is encrypted
+    if [[ "$backup_file" == *.gpg ]]; then
+        if ! command -v gpg &> /dev/null; then
+            echo "❌ Error: gpg not found. Cannot decrypt config backup."
+            exit 1
+        fi
+        
+        # Prompt for passphrase
+        echo "🔐 This backup is encrypted"
+        read -sp "Enter decryption passphrase: " passphrase
+        echo ""
+        
+        # Decrypt and extract
+        TEMP_DIR=$(mktemp -d)
+        if gpg --batch --yes --passphrase "$passphrase" --decrypt "$backup_file" | tar -xz -C "$TEMP_DIR" 2>/dev/null; then
+            echo "✅ Config decrypted successfully"
+            
+            # Confirm restoration
+            echo "⚠️  WARNING: This will OVERWRITE existing config files!"
+            echo "   Files to restore:"
+            ls -1 "$TEMP_DIR"
+            read -p "Continue? (yes/no): " confirm
+            
+            if [ "$confirm" = "yes" ]; then
+                cp -v "$TEMP_DIR"/* "$project_dir/"
+                echo "✅ Config files restored successfully"
+            else
+                echo "❌ Restoration cancelled"
+            fi
+        else
+            echo "❌ Decryption failed. Check your passphrase."
+            rm -rf "$TEMP_DIR"
+            exit 1
+        fi
+        
+        rm -rf "$TEMP_DIR"
+    else
+        # Unencrypted backup
+        TEMP_DIR=$(mktemp -d)
+        tar -xzf "$backup_file" -C "$TEMP_DIR"
+        
+        echo "⚠️  WARNING: This will OVERWRITE existing config files!"
+        read -p "Continue? (yes/no): " confirm
+        
+        if [ "$confirm" = "yes" ]; then
+            cp -v "$TEMP_DIR"/* "$project_dir/"
+            echo "✅ Config files restored successfully"
+        fi
+        
+        rm -rf "$TEMP_DIR"
+    fi
 }
 
 restore_mongodb() {
@@ -165,12 +232,13 @@ fi
 echo "Select restoration option:"
 echo "1) Restore MongoDB (from local backup)"
 echo "2) Restore Uploads (from local backup)"
-echo "3) Restore both (from local backups)"
-echo "4) Download from Google Drive first"
-echo "5) List available backups"
-echo "6) Exit"
+echo "3) Restore Config Files (encrypted)"
+echo "4) Restore both MongoDB & Uploads"
+echo "5) Download from Google Drive first"
+echo "6) List available backups"
+echo "7) Exit"
 echo ""
-read -p "Enter choice [1-6]: " choice
+read -p "Enter choice [1-7]: " choice
 
 case $choice in
     1)
@@ -207,6 +275,21 @@ case $choice in
     3)
         list_backups
         echo ""
+        read -p "Enter config backup filename (e.g., config_20251208_082443.tar.gz.gpg): " config_file
+        if [ -f "$BACKUP_DIR/$config_file" ]; then
+            restore_config "$BACKUP_DIR/$config_file"
+        else
+            found=$(find "$BACKUP_DIR" -maxdepth 1 -name "*$config_file*" -type f | head -1)
+            if [ -n "$found" ]; then
+                restore_config "$found"
+            else
+                echo "❌ Config backup file not found"
+            fi
+        fi
+        ;;
+    4)
+        list_backups
+        echo ""
         read -p "Enter MongoDB backup filename: " mongo_file
         read -p "Enter uploads backup filename: " uploads_file
         
@@ -220,7 +303,7 @@ case $choice in
             echo "❌ One or more backup files not found"
         fi
         ;;
-    4)
+    5)
         downloaded=$(download_from_gdrive)
         if [ -n "$downloaded" ]; then
             read -p "Restore this backup now? (yes/no): " restore_now
@@ -229,10 +312,10 @@ case $choice in
             fi
         fi
         ;;
-    5)
+    6)
         list_backups
         ;;
-    6)
+    7)
         echo "Exiting..."
         exit 0
         ;;
