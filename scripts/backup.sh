@@ -155,39 +155,58 @@ else
 fi
 
 # ============================================
-# 5. Cleanup Old Backups (Local)
+# 5. Cleanup Old Backups (Keep only 2 most recent)
 # ============================================
 
-log "🧹 Cleaning up old local backups (older than $LOCAL_RETENTION_DAYS days)"
+log "🧹 Cleaning up old local backups (keeping only 2 most recent)"
 
-# Clean MongoDB backups
-find "$BACKUP_DIR/mongodb" -name "*.tar.gz" -type f -mtime +$LOCAL_RETENTION_DAYS -delete 2>/dev/null || true
+# Keep only 2 most recent MongoDB backups
+MONGO_BACKUPS=$(find "$BACKUP_DIR/mongodb" -name "*.tar.gz" -type f -printf "%T@ %p\n" | sort -rn | tail -n +3 | cut -d' ' -f2-)
+if [ -n "$MONGO_BACKUPS" ]; then
+    echo "$MONGO_BACKUPS" | xargs rm -f 2>/dev/null || true
+fi
 MONGO_COUNT=$(find "$BACKUP_DIR/mongodb" -name "*.tar.gz" -type f | wc -l)
 
-# Clean uploads backups
-find "$BACKUP_DIR/uploads" -name "*.tar.gz" -type f -mtime +$LOCAL_RETENTION_DAYS -delete 2>/dev/null || true
+# Keep only 2 most recent uploads backups
+UPLOADS_BACKUPS=$(find "$BACKUP_DIR/uploads" -name "*.tar.gz" -type f -printf "%T@ %p\n" | sort -rn | tail -n +3 | cut -d' ' -f2-)
+if [ -n "$UPLOADS_BACKUPS" ]; then
+    echo "$UPLOADS_BACKUPS" | xargs rm -f 2>/dev/null || true
+fi
 UPLOADS_COUNT=$(find "$BACKUP_DIR/uploads" -name "*.tar.gz" -type f | wc -l)
 
-# Clean config backups
-find "$BACKUP_DIR" -name "config_*.tar.gz" -type f -mtime +$LOCAL_RETENTION_DAYS -delete 2>/dev/null || true
+# Keep only 2 most recent config backups
+CONFIG_BACKUPS=$(find "$BACKUP_DIR" -maxdepth 1 -name "config_*.tar.gz*" -type f -printf "%T@ %p\n" | sort -rn | tail -n +3 | cut -d' ' -f2-)
+if [ -n "$CONFIG_BACKUPS" ]; then
+    echo "$CONFIG_BACKUPS" | xargs rm -f 2>/dev/null || true
+fi
 
 log "📊 Local backups retained: $MONGO_COUNT MongoDB, $UPLOADS_COUNT uploads"
 
 # ============================================
-# 6. Cleanup Old Backups (Google Drive)
+# 6. Cleanup Old Backups (Google Drive - Keep only 2)
 # ============================================
 
 if command -v rclone &> /dev/null; then
-    log "🧹 Cleaning up old Google Drive backups (older than $GDRIVE_RETENTION_DAYS days)"
+    log "🧹 Cleaning up old Google Drive backups (keeping only 2 most recent)"
     
-    # Clean old MongoDB backups on Google Drive
-    rclone delete "$GDRIVE_REMOTE/mongodb" --min-age ${GDRIVE_RETENTION_DAYS}d 2>/dev/null || true
+    # Function to keep only N most recent files in rclone remote
+    cleanup_gdrive_folder() {
+        local remote_path="$1"
+        local keep_count=2
+        
+        # List files with timestamps, sort, and delete old ones
+        rclone lsf "$remote_path" --format "tp" 2>/dev/null | sort -rn | tail -n +$((keep_count + 1)) | while read line; do
+            filename=$(echo "$line" | cut -f2-)
+            if [ -n "$filename" ]; then
+                rclone delete "$remote_path/$filename" 2>/dev/null || true
+            fi
+        done
+    }
     
-    # Clean old uploads backups on Google Drive
-    rclone delete "$GDRIVE_REMOTE/uploads" --min-age ${GDRIVE_RETENTION_DAYS}d 2>/dev/null || true
-    
-    # Clean old config backups on Google Drive
-    rclone delete "$GDRIVE_REMOTE/config" --min-age ${GDRIVE_RETENTION_DAYS}d 2>/dev/null || true
+    # Clean each backup type
+    cleanup_gdrive_folder "$GDRIVE_REMOTE/mongodb/$DATE_DIR"
+    cleanup_gdrive_folder "$GDRIVE_REMOTE/uploads/$DATE_DIR"
+    cleanup_gdrive_folder "$GDRIVE_REMOTE/config"
     
     log "✅ Google Drive cleanup completed"
 fi
