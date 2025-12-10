@@ -43,34 +43,19 @@ export async function GET(
       );
     }
 
-    const { db } = await connectToDatabase();
-    
-    // 4. Check if user owns the payment associated with this proof
-    // or if user is an admin
+    // 4. Admin-only access check
     const adminEmails = process.env.ADMIN_EMAILS?.split(',').map(e => e.trim()) || [];
     const isAdmin = adminEmails.length > 0 && adminEmails.includes(email);
     
     if (!isAdmin) {
-      // Verify ownership: find payment with this paymentProof and check if ownerId matches
-      const payment = await db.collection("payments").findOne({ 
-        paymentProof: new ObjectId(fileId) 
-      });
-      
-      if (!payment) {
-        return NextResponse.json(
-          { error: "Payment proof not found" },
-          { status: 404 }
-        );
-      }
-      
-      if (payment.ownerId?.toString() !== userId.toString()) {
-        return NextResponse.json(
-          { error: "Forbidden: You don't have permission to access this payment proof" },
-          { status: 403 }
-        );
-      }
+      return NextResponse.json(
+        { error: "Forbidden: Admin access required to view payment proofs" },
+        { status: 403 }
+      );
     }
 
+    const { db } = await connectToDatabase();
+    
     // 5. Access GridFS bucket
     const bucket = new GridFSBucket(db, { bucketName: "payment-proofs" });
 
