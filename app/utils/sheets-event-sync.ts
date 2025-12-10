@@ -759,7 +759,7 @@ export async function initialFullSync(): Promise<InitialSyncResult> {
           numberOfPeople.toString(),
           owner ? String(owner.phone || "") : "",
           owner ? String(owner.email || "") : "",
-          doc.paymentProof ? `${process.env.ROOT_URL || ""}/api/payments/proof/${doc.paymentProof}` : ""
+          doc.paymentProof ? `${process.env.ROOT_URL || ""}api/payments/proof/${doc.paymentProof}` : ""
         ];
       });
 
