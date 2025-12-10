@@ -160,22 +160,25 @@ fi
 
 log "🧹 Cleaning up old local backups (keeping only 2 most recent)"
 
-# Keep only 2 most recent MongoDB backups
-MONGO_BACKUPS=$(find "$BACKUP_DIR/mongodb" -name "*.tar.gz" -type f -printf "%T@ %p\n" | sort -rn | tail -n +3 | cut -d' ' -f2-)
+# Keep only 2 most recent MongoDB backups (portable version)
+MONGO_BACKUPS=$(find "$BACKUP_DIR/mongodb" -name "*.tar.gz" -type f -exec stat -c '%Y %n' {} \; 2>/dev/null | sort -rn | tail -n +3 | cut -d' ' -f2- || \
+                find "$BACKUP_DIR/mongodb" -name "*.tar.gz" -type f -exec stat -f '%m %N' {} \; 2>/dev/null | sort -rn | tail -n +3 | cut -d' ' -f2-)
 if [ -n "$MONGO_BACKUPS" ]; then
     echo "$MONGO_BACKUPS" | xargs rm -f 2>/dev/null || true
 fi
 MONGO_COUNT=$(find "$BACKUP_DIR/mongodb" -name "*.tar.gz" -type f | wc -l)
 
-# Keep only 2 most recent uploads backups
-UPLOADS_BACKUPS=$(find "$BACKUP_DIR/uploads" -name "*.tar.gz" -type f -printf "%T@ %p\n" | sort -rn | tail -n +3 | cut -d' ' -f2-)
+# Keep only 2 most recent uploads backups (portable version)
+UPLOADS_BACKUPS=$(find "$BACKUP_DIR/uploads" -name "*.tar.gz" -type f -exec stat -c '%Y %n' {} \; 2>/dev/null | sort -rn | tail -n +3 | cut -d' ' -f2- || \
+                  find "$BACKUP_DIR/uploads" -name "*.tar.gz" -type f -exec stat -f '%m %N' {} \; 2>/dev/null | sort -rn | tail -n +3 | cut -d' ' -f2-)
 if [ -n "$UPLOADS_BACKUPS" ]; then
     echo "$UPLOADS_BACKUPS" | xargs rm -f 2>/dev/null || true
 fi
 UPLOADS_COUNT=$(find "$BACKUP_DIR/uploads" -name "*.tar.gz" -type f | wc -l)
 
-# Keep only 2 most recent config backups
-CONFIG_BACKUPS=$(find "$BACKUP_DIR" -maxdepth 1 -name "config_*.tar.gz*" -type f -printf "%T@ %p\n" | sort -rn | tail -n +3 | cut -d' ' -f2-)
+# Keep only 2 most recent config backups (portable version)
+CONFIG_BACKUPS=$(find "$BACKUP_DIR" -maxdepth 1 -name "config_*.tar.gz*" -type f -exec stat -c '%Y %n' {} \; 2>/dev/null | sort -rn | tail -n +3 | cut -d' ' -f2- || \
+                 find "$BACKUP_DIR" -maxdepth 1 -name "config_*.tar.gz*" -type f -exec stat -f '%m %N' {} \; 2>/dev/null | sort -rn | tail -n +3 | cut -d' ' -f2-)
 if [ -n "$CONFIG_BACKUPS" ]; then
     echo "$CONFIG_BACKUPS" | xargs rm -f 2>/dev/null || true
 fi

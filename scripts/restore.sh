@@ -8,11 +8,12 @@ set -e  # Exit on error
 # Configuration
 # ============================================
 
-BACKUP_DIR="/mnt/HC_Volume_103871510/backups/regform"
+BACKUP_DIR="$HOME/backups/regform"
 MONGODB_URI="mongodb://127.0.0.1:27017/production"
 DB_NAME="production"
-UPLOAD_PATH="/mnt/HC_Volume_103871510/host/StrapiMongoDB/public/uploads"
-GDRIVE_REMOTE="gdrive:Backups/RegForm"
+UPLOAD_PATH="$HOME/regform/public/uploads"
+PROJECT_DIR="$HOME/regform"
+GDRIVE_REMOTE="agneepath-gdrive:server-backups"
 
 # ============================================
 # Functions
@@ -22,32 +23,32 @@ list_backups() {
     echo "📋 Available Local Backups:"
     echo ""
     echo "MongoDB Backups:"
-    find "$BACKUP_DIR/mongodb" -name "*.tar.gz" -type f -printf "%T@ %p\n" | sort -rn | head -10 | while read timestamp path; do
-        date=$(date -d @${timestamp%.*} "+%Y-%m-%d %H:%M:%S")
-        size=$(du -h "$path" | cut -f1)
-        echo "  $date - $(basename $path) ($size)"
-    done
+    if [ -d "$BACKUP_DIR/mongodb" ]; then
+        find "$BACKUP_DIR/mongodb" -name "*.tar.gz" -type f -exec ls -lh {} \; | awk '{print $9, "(" $5 ")"}' | sort -r | head -10
+    else
+        echo "  No MongoDB backups found"
+    fi
     
     echo ""
     echo "Uploads Backups:"
-    find "$BACKUP_DIR/uploads" -name "*.tar.gz" -type f -printf "%T@ %p\n" | sort -rn | head -10 | while read timestamp path; do
-        date=$(date -d @${timestamp%.*} "+%Y-%m-%d %H:%M:%S")
-        size=$(du -h "$path" | cut -f1)
-        echo "  $date - $(basename $path) ($size)"
-    done
+    if [ -d "$BACKUP_DIR/uploads" ]; then
+        find "$BACKUP_DIR/uploads" -name "*.tar.gz" -type f -exec ls -lh {} \; | awk '{print $9, "(" $5 ")"}' | sort -r | head -10
+    else
+        echo "  No uploads backups found"
+    fi
     
     echo ""
     echo "Config Backups (encrypted):"
-    find "$BACKUP_DIR" -maxdepth 1 -name "config_*.tar.gz.gpg" -type f -printf "%T@ %p\n" | sort -rn | head -10 | while read timestamp path; do
-        date=$(date -d @${timestamp%.*} "+%Y-%m-%d %H:%M:%S")
-        size=$(du -h "$path" | cut -f1)
-        echo "  $date - $(basename $path) ($size)"
-    done
+    if [ -d "$BACKUP_DIR" ]; then
+        find "$BACKUP_DIR" -maxdepth 1 -name "config_*.tar.gz*" -type f -exec ls -lh {} \; | awk '{print $9, "(" $5 ")"}' | sort -r | head -10
+    else
+        echo "  No config backups found"
+    fi
 }
 
 restore_config() {
     local backup_file="$1"
-    local project_dir="${2:-/mnt/HC_Volume_103871510/host/regform}"
+    local project_dir="${2:-$PROJECT_DIR}"
     
     echo "🔄 Restoring config from: $(basename $backup_file)"
     
