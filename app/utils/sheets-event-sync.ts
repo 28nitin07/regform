@@ -188,42 +188,59 @@ export async function syncPaymentSubmission(paymentId: string): Promise<SyncResu
 
   try {
     const { db } = await connectToDatabase();
-    const payment = await db.collection("payments").findOne({ _id: new ObjectId(paymentId) });
+    
+    // Optimize: Use aggregation to fetch payment with related user and forms data in a single query
+    // This reduces 3 separate queries (payment, user, forms) to 1 aggregated query
+    const paymentAggregation = await db.collection("payments").aggregate([
+      { $match: { _id: new ObjectId(paymentId) } },
+      {
+        $lookup: {
+          from: "users",
+          localField: "ownerId",
+          foreignField: "_id",
+          as: "ownerData"
+        }
+      },
+      {
+        $lookup: {
+          from: "form",
+          localField: "ownerId",
+          foreignField: "ownerId",
+          as: "formsData"
+        }
+      },
+      { $limit: 1 }
+    ]).toArray();
 
-    if (!payment) {
+    if (paymentAggregation.length === 0) {
       console.error("[Sheets] Payment not found:", paymentId);
       return { success: false, error: "Payment not found" };
     }
 
-    // Fetch user data for contact info
-    let userEmail = "";
-    let userPhone = "";
-    if (payment.ownerId) {
-      const user = await db.collection("users").findOne({ _id: new ObjectId(payment.ownerId) });
-      if (user) {
-        userEmail = String(user.email || "");
-        userPhone = String(user.phone || "");
-      }
-    }
+    const payment = paymentAggregation[0];
+    const user = payment.ownerData?.[0];
+    const forms = payment.formsData || [];
 
-    // Fetch forms to get sport/category and count people
+    // Extract user contact info
+    const userEmail = String(user?.email || "");
+    const userPhone = String(user?.phone || "");
+
+    // Extract sports and calculate player count
     let sports = "";
-    let category = "";
     let numberOfPeople = 0;
-    if (payment.ownerId) {
-      const forms = await db.collection("form").find({ ownerId: payment.ownerId }).toArray();
-      if (forms.length > 0) {
-        // Get all sports/events
-        sports = forms.map(f => String(f.title || "")).filter(Boolean).join(", ");
-        // Count total players across all forms
-        numberOfPeople = forms.reduce((total, form) => {
+    let category = "";
+    
+    if (forms.length > 0) {
+      // Get all sports/events
+      sports = forms.map((f: any) => String(f.title || "")).filter(Boolean).join(", ");
+      // Count total players across all forms
+      numberOfPeople = forms.reduce((total: number, form: any) => {
         const fields = form.fields as Record<string, unknown> | undefined;
         const playerFields = (fields?.playerFields as Record<string, unknown>[]) || [];
         return total + playerFields.length;
       }, 0);
-        // Derive category based on player count: Individual (1) or Team (multiple)
-        category = numberOfPeople === 1 ? "Individual" : "Team";
-      }
+      // Derive category based on player count: Individual (1) or Team (multiple)
+      category = numberOfPeople === 1 ? "Individual" : "Team";
     }
 
     // Format date and time separately
