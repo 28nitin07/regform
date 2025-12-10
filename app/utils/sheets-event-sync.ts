@@ -39,7 +39,7 @@ const SHEET_CONFIGS: Record<string, SheetConfig> = {
   },
   payments: {
     name: "Payments",
-    headers: ["Date", "Time", "Transaction ID", "Payment ID", "Payment Amount", "Account Holder Name", "Sports", "Category", "Player Count", "Contact Number", "Email"]
+    headers: ["Date", "Time", "Transaction ID", "Payment ID", "Payment Amount", "Account Holder Name", "Sports", "Category", "Player Count", "Contact Number", "Email", "Payment Proof"]
   }
 };
 
@@ -252,7 +252,8 @@ export async function syncPaymentSubmission(paymentId: string): Promise<SyncResu
       category,
       numberOfPeople.toString(),
       userPhone,
-      userEmail
+      userEmail,
+      payment.paymentProof ? `${process.env.ROOT_URL || ""}/api/payments/proof/${payment.paymentProof}` : ""
     ];
 
     // Update or append to Google Sheet
@@ -735,7 +736,8 @@ export async function initialFullSync(): Promise<InitialSyncResult> {
           "Team",
           numberOfPeople.toString(),
           owner ? String(owner.phone || "") : "",
-          owner ? String(owner.email || "") : ""
+          owner ? String(owner.email || "") : "",
+          doc.paymentProof ? `${process.env.ROOT_URL || ""}/api/payments/proof/${doc.paymentProof}` : ""
         ];
       });
 
