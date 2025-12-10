@@ -39,7 +39,7 @@ const SHEET_CONFIGS: Record<string, SheetConfig> = {
   },
   payments: {
     name: "Payments",
-    headers: ["Payment ID", "User ID", "Amount (Numbers)", "Amount (Words)", "Payment Mode", "Transaction ID", "Payee Name", "Payment Date", "Status", "Created At"]
+    headers: ["Date", "Time", "Transaction ID", "Payment ID", "Payment Amount", "Account Holder Name", "Sports", "Category", "Number of People", "Contact Number", "Email"]
   }
 };
 
@@ -195,17 +195,64 @@ export async function syncPaymentSubmission(paymentId: string): Promise<SyncResu
       return { success: false, error: "Payment not found" };
     }
 
+    // Fetch user data for contact info
+    let userEmail = "";
+    let userPhone = "";
+    if (payment.ownerId) {
+      const user = await db.collection("users").findOne({ _id: new ObjectId(payment.ownerId) });
+      if (user) {
+        userEmail = String(user.email || "");
+        userPhone = String(user.phone || "");
+      }
+    }
+
+    // Fetch forms to get sport/category and count people
+    let sports = "";
+    let category = "";
+    let numberOfPeople = 0;
+    if (payment.ownerId) {
+      const forms = await db.collection("form").find({ ownerId: payment.ownerId }).toArray();
+      if (forms.length > 0) {
+        // Get all sports/events
+        sports = forms.map(f => String(f.title || "")).filter(Boolean).join(", ");
+        // Count total players across all forms
+        numberOfPeople = forms.reduce((total, form) => {
+          const fields = form.fields as Record<string, unknown> | undefined;
+          const playerFields = (fields?.playerFields as Record<string, unknown>[]) || [];
+          return total + playerFields.length;
+        }, 0);
+        // Category can be derived from status or set as "Team" for now
+        category = "Team";
+      }
+    }
+
+    // Format date and time separately
+    const paymentDate = payment.paymentDate ? new Date(payment.paymentDate) : new Date();
+    const date = paymentDate.toLocaleDateString('en-IN', { 
+      timeZone: 'Asia/Kolkata',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    });
+    const time = paymentDate.toLocaleTimeString('en-IN', { 
+      timeZone: 'Asia/Kolkata',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    });
+
     const row = [
-      payment._id.toString(),
-      payment.ownerId ? payment.ownerId.toString() : "",
-      String(payment.amountInNumbers || ""),
-      String(payment.amountInWords || ""),
-      String(payment.paymentMode || ""),
+      date,
+      time,
       String(payment.transactionId || ""),
+      payment._id.toString(),
+      String(payment.amountInNumbers || ""),
       String(payment.payeeName || ""),
-      formatDate(payment.paymentDate),
-      String(payment.status || ""),
-      formatDate(payment.createdAt)
+      sports,
+      category,
+      numberOfPeople.toString(),
+      userPhone,
+      userEmail
     ];
 
     // Update or append to Google Sheet
@@ -631,18 +678,66 @@ export async function initialFullSync(): Promise<InitialSyncResult> {
     console.log("[Sheets] Syncing payments...");
     const payments = await db.collection("payments").find({}).toArray();
     if (payments.length > 0) {
-      const paymentRows = payments.map(doc => [
-        doc._id.toString(),
-        doc.ownerId ? doc.ownerId.toString() : "",
-        String(doc.amountInNumbers || ""),
-        String(doc.amountInWords || ""),
-        String(doc.paymentMode || ""),
-        String(doc.transactionId || ""),
-        String(doc.payeeName || ""),
-        formatDate(doc.paymentDate),
-        String(doc.status || ""),
-        formatDate(doc.createdAt)
-      ]);
+      // Fetch all users for contact info
+      const ownerIds = payments.map(p => p.ownerId).filter(Boolean);
+      const paymentOwners = await db.collection("users").find({ _id: { $in: ownerIds } }).toArray();
+      const paymentOwnerMap = new Map(paymentOwners.map(o => [o._id.toString(), o]));
+      
+      // Fetch all forms to get sports and count people
+      const paymentForms = await db.collection("form").find({ ownerId: { $in: ownerIds } }).toArray();
+      const formsByOwner = new Map<string, typeof paymentForms>();
+      paymentForms.forEach(form => {
+        const ownerId = form.ownerId?.toString();
+        if (ownerId) {
+          if (!formsByOwner.has(ownerId)) {
+            formsByOwner.set(ownerId, []);
+          }
+          formsByOwner.get(ownerId)!.push(form);
+        }
+      });
+
+      const paymentRows = payments.map(doc => {
+        const ownerId = doc.ownerId?.toString();
+        const owner = ownerId ? paymentOwnerMap.get(ownerId) : null;
+        const userForms = ownerId ? formsByOwner.get(ownerId) || [] : [];
+        
+        // Get sports and count people
+        const sports = userForms.map(f => String(f.title || "")).filter(Boolean).join(", ");
+        const numberOfPeople = userForms.reduce((total, form) => {
+          const fields = form.fields as Record<string, unknown> | undefined;
+          const playerFields = (fields?.playerFields as Record<string, unknown>[]) || [];
+          return total + playerFields.length;
+        }, 0);
+        
+        // Format date and time
+        const paymentDate = doc.paymentDate ? new Date(doc.paymentDate) : new Date();
+        const date = paymentDate.toLocaleDateString('en-IN', { 
+          timeZone: 'Asia/Kolkata',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        });
+        const time = paymentDate.toLocaleTimeString('en-IN', { 
+          timeZone: 'Asia/Kolkata',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true
+        });
+        
+        return [
+          date,
+          time,
+          String(doc.transactionId || ""),
+          doc._id.toString(),
+          String(doc.amountInNumbers || ""),
+          String(doc.payeeName || ""),
+          sports,
+          "Team",
+          numberOfPeople.toString(),
+          owner ? String(owner.phone || "") : "",
+          owner ? String(owner.email || "") : ""
+        ];
+      });
 
       await sheets.spreadsheets.values.clear({
         spreadsheetId,
