@@ -31,15 +31,15 @@ interface SheetConfig {
 const SHEET_CONFIGS: Record<string, SheetConfig> = {
   forms: {
     name: "Registrations",
-    headers: ["Form ID", "User ID", "Sport/Event", "Status", "University Name", "User Email", "User Phone", "Created At", "Updated At", "Player Count", "Player Names", "Player Emails", "Player Phones", "POC/Coach Name", "POC/Coach Email", "POC/Coach Phone"]
+    headers: ["Sport/Event", "Status", "University Name", "User Email", "User Phone", "Created At", "Updated At", "Player Count", "Player Names", "Player Emails", "Player Phones", "POC/Coach Name", "POC/Coach Email", "POC/Coach Phone"]
   },
   users: {
     name: "Users",
-    headers: ["User ID", "Name", "Email", "University", "Verified", "Registration Done", "Payment Done", "Created At"]
+    headers: ["Name", "Email", "Contact Number", "University", "Verified", "Registration Done", "Payment Done", "Created At"]
   },
   payments: {
     name: "Payments",
-    headers: ["Payment ID", "User ID", "Amount (Numbers)", "Amount (Words)", "Payment Mode", "Transaction ID", "Payee Name", "Payment Date", "Status", "Created At"]
+    headers: ["Date", "Time", "Transaction ID", "Payment ID", "Payment Amount", "Account Holder Name", "Sports", "Category", "Player Count", "Contact Number", "Email", "Payment Proof"]
   }
 };
 
@@ -106,8 +106,6 @@ export async function syncFormSubmission(formId: string): Promise<SyncResult> {
     const playerPhones = playerFields.map((p: Record<string, unknown>) => String(p.phone || "")).join(" | ");
 
     const row = [
-      form._id.toString(),
-      form.ownerId ? form.ownerId.toString() : "",
       String(form.title || ""),
       String(form.status || ""),
       ownerUniversity,
@@ -156,9 +154,9 @@ export async function syncUserRegistration(userId: string): Promise<SyncResult> 
     }
 
     const row = [
-      user._id.toString(),
       String(user.name || ""),
       String(user.email || ""),
+      String(user.phone || ""),
       String(user.universityName || ""),
       user.emailVerified ? "Yes" : "No",
       user.registrationDone ? "Yes" : "No",
@@ -190,24 +188,89 @@ export async function syncPaymentSubmission(paymentId: string): Promise<SyncResu
 
   try {
     const { db } = await connectToDatabase();
-    const payment = await db.collection("payments").findOne({ _id: new ObjectId(paymentId) });
+    
+    // Optimize: Use aggregation to fetch payment with related user and forms data in a single query
+    // This reduces 3 separate queries (payment, user, forms) to 1 aggregated query
+    const paymentAggregation = await db.collection("payments").aggregate([
+      { $match: { _id: new ObjectId(paymentId) } },
+      {
+        $lookup: {
+          from: "users",
+          localField: "ownerId",
+          foreignField: "_id",
+          as: "ownerData"
+        }
+      },
+      {
+        $lookup: {
+          from: "form",
+          localField: "ownerId",
+          foreignField: "ownerId",
+          as: "formsData"
+        }
+      },
+      { $limit: 1 }
+    ]).toArray();
 
-    if (!payment) {
+    if (paymentAggregation.length === 0) {
       console.error("[Sheets] Payment not found:", paymentId);
       return { success: false, error: "Payment not found" };
     }
 
+    const payment = paymentAggregation[0];
+    const user = payment.ownerData?.[0];
+    const forms = payment.formsData || [];
+
+    // Extract user contact info
+    const userEmail = String(user?.email || "");
+    const userPhone = String(user?.phone || "");
+
+    // Extract sports and calculate player count
+    let sports = "";
+    let numberOfPeople = 0;
+    let category = "";
+    
+    if (forms.length > 0) {
+      // Get all sports/events
+      sports = forms.map((f: { title?: string }) => String(f.title || "")).filter(Boolean).join(", ");
+      // Count total players across all forms
+      numberOfPeople = forms.reduce((total: number, form: { fields?: Record<string, unknown> }) => {
+        const fields = form.fields as Record<string, unknown> | undefined;
+        const playerFields = (fields?.playerFields as Record<string, unknown>[]) || [];
+        return total + playerFields.length;
+      }, 0);
+      // Derive category based on player count: Individual (1) or Team (multiple)
+      category = numberOfPeople === 1 ? "Individual" : "Team";
+    }
+
+    // Format date and time separately
+    const paymentDate = payment.paymentDate ? new Date(payment.paymentDate) : new Date();
+    const date = paymentDate.toLocaleDateString('en-IN', { 
+      timeZone: 'Asia/Kolkata',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    });
+    const time = paymentDate.toLocaleTimeString('en-IN', { 
+      timeZone: 'Asia/Kolkata',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    });
+
     const row = [
-      payment._id.toString(),
-      payment.ownerId ? payment.ownerId.toString() : "",
-      String(payment.amountInNumbers || ""),
-      String(payment.amountInWords || ""),
-      String(payment.paymentMode || ""),
+      date,
+      time,
       String(payment.transactionId || ""),
+      payment._id.toString(),
+      String(payment.amountInNumbers || ""),
       String(payment.payeeName || ""),
-      formatDate(payment.paymentDate),
-      String(payment.status || ""),
-      formatDate(payment.createdAt)
+      sports,
+      category,
+      numberOfPeople.toString(),
+      userPhone,
+      userEmail,
+      payment.paymentProof ? `${process.env.ROOT_URL || ""}/api/payments/proof/${payment.paymentProof}` : ""
     ];
 
     // Update or append to Google Sheet
@@ -346,7 +409,9 @@ async function updateOrAppendToSheet(sheetName: string, id: string, row: string[
 /**
  * Helper function to append rows to a specific sheet with retry logic
  * Used only for initial sync where we know rows don't exist yet
+ * @deprecated - Currently unused, kept for future batch operations
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function appendToSheet(sheetName: string, rows: string[][], maxRetries = 3): Promise<void> {
   let lastError: Error | undefined;
 
@@ -563,8 +628,6 @@ export async function initialFullSync(): Promise<InitialSyncResult> {
         const playerPhones = playerFields.map((p: Record<string, unknown>) => String(p.phone || "")).join(" | ");
         
         return [
-          doc._id.toString(),
-          doc.ownerId ? doc.ownerId.toString() : "",
           String(doc.title || ""),
           String(doc.status || ""),
           ownerUniversity,
@@ -604,9 +667,9 @@ export async function initialFullSync(): Promise<InitialSyncResult> {
     const users = await db.collection("users").find({}).toArray();
     if (users.length > 0) {
       const userRows = users.map(doc => [
-        doc._id.toString(),
         String(doc.name || ""),
         String(doc.email || ""),
+        String(doc.phone || ""),
         String(doc.universityName || ""),
         doc.emailVerified ? "Yes" : "No",
         doc.registrationDone ? "Yes" : "No",
@@ -635,18 +698,70 @@ export async function initialFullSync(): Promise<InitialSyncResult> {
     console.log("[Sheets] Syncing payments...");
     const payments = await db.collection("payments").find({}).toArray();
     if (payments.length > 0) {
-      const paymentRows = payments.map(doc => [
-        doc._id.toString(),
-        doc.ownerId ? doc.ownerId.toString() : "",
-        String(doc.amountInNumbers || ""),
-        String(doc.amountInWords || ""),
-        String(doc.paymentMode || ""),
-        String(doc.transactionId || ""),
-        String(doc.payeeName || ""),
-        formatDate(doc.paymentDate),
-        String(doc.status || ""),
-        formatDate(doc.createdAt)
-      ]);
+      // Fetch all users for contact info
+      const ownerIds = payments.map(p => p.ownerId).filter(Boolean);
+      const paymentOwners = await db.collection("users").find({ _id: { $in: ownerIds } }).toArray();
+      const paymentOwnerMap = new Map(paymentOwners.map(o => [o._id.toString(), o]));
+      
+      // Fetch all forms to get sports and count people
+      const paymentForms = await db.collection("form").find({ ownerId: { $in: ownerIds } }).toArray();
+      const formsByOwner = new Map<string, typeof paymentForms>();
+      paymentForms.forEach(form => {
+        const ownerId = form.ownerId?.toString();
+        if (ownerId) {
+          if (!formsByOwner.has(ownerId)) {
+            formsByOwner.set(ownerId, []);
+          }
+          formsByOwner.get(ownerId)!.push(form);
+        }
+      });
+
+      const paymentRows = payments.map(doc => {
+        const ownerId = doc.ownerId?.toString();
+        const owner = ownerId ? paymentOwnerMap.get(ownerId) : null;
+        const userForms = ownerId ? formsByOwner.get(ownerId) || [] : [];
+        
+        // Get sports and count people
+        const sports = userForms.map(f => String(f.title || "")).filter(Boolean).join(", ");
+        const numberOfPeople = userForms.reduce((total, form) => {
+          const fields = form.fields as Record<string, unknown> | undefined;
+          const playerFields = (fields?.playerFields as Record<string, unknown>[]) || [];
+          return total + playerFields.length;
+        }, 0);
+        
+        // Derive category based on player count: Individual (1) or Team (multiple)
+        const category = numberOfPeople === 1 ? "Individual" : "Team";
+        
+        // Format date and time
+        const paymentDate = doc.paymentDate ? new Date(doc.paymentDate) : new Date();
+        const date = paymentDate.toLocaleDateString('en-IN', { 
+          timeZone: 'Asia/Kolkata',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        });
+        const time = paymentDate.toLocaleTimeString('en-IN', { 
+          timeZone: 'Asia/Kolkata',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true
+        });
+        
+        return [
+          date,
+          time,
+          String(doc.transactionId || ""),
+          doc._id.toString(),
+          String(doc.amountInNumbers || ""),
+          String(doc.payeeName || ""),
+          sports,
+          category,
+          numberOfPeople.toString(),
+          owner ? String(owner.phone || "") : "",
+          owner ? String(owner.email || "") : "",
+          doc.paymentProof ? `${process.env.ROOT_URL || ""}api/payments/proof/${doc.paymentProof}` : ""
+        ];
+      });
 
       await sheets.spreadsheets.values.clear({
         spreadsheetId,
