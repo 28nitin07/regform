@@ -72,17 +72,19 @@ export default function UniversityNamePage() {
     return (
         <Card className="w-[350px]">
             <CardHeader>
-                <CardTitle>Enter University Name</CardTitle>
-            </CardHeader>
+  <CardTitle>
+    Enter University
+  </CardTitle>
+</CardHeader>
             <CardContent>
                 <form onSubmit={handleSubmit}>
                     <div className="grid w-full items-center gap-4">
                         <div className="flex flex-col space-y-1.5">
-                            <Label htmlFor="universityName">University Name</Label>
+                            <Label htmlFor="universityName">College/University Name</Label>
                             <Input
                                 id="universityName"
                                 type="text"
-                                placeholder="University Name"
+                                placeholder="e.g., DU – St. Stephen's College"
                                 value={formData.universityName}
                                 onChange={handleChange}
                             />

@@ -135,11 +135,13 @@ export function SignUp() {
                                 />
                             </div>
                             <div className="flex flex-col space-y-1.5">
-                                <Label htmlFor="universityName">University Name</Label>
+                            <Label htmlFor="universityName">College/University Name Eg: </Label>
+
+
                                 <Input
                                     id="universityName"
                                     type="text"
-                                    placeholder="Full name of university"
+                                    placeholder="e.g., DU – St. Stephen's College"
                                     value={formData.universityName}
                                     onChange={handleChange}
                                 />

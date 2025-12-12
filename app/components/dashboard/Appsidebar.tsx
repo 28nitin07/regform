@@ -11,6 +11,7 @@ import { usePathname } from "next/navigation";
 import RegistrationProgress from "@/app/components/dashboard/RegistrationProgress";
 
 
+
 import {
   Sidebar,
   SidebarContent,
@@ -274,6 +275,20 @@ const getAuthToken = (): string | null => {
     </SidebarMenuItem>
   ))}
 </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+        {/* FAQ Section */}
+        <SidebarGroup>
+          <SidebarGroupLabel>Help</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton onClick={() => setFaqOpen(true)} className="flex space-x-2 text-lg">
+                  <HelpCircle className="h-5 w-5" />
+                  <span>FAQ</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
