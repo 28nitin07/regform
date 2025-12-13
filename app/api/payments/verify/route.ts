@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
     const { db } = await connectToDatabase();
     const paymentsCollection = db.collection("payments");
     const usersCollection = db.collection("users");
-    const formsCollection = db.collection("forms");
+    const formsCollection = db.collection("form");
 
     // Get payment details
     const payment = await paymentsCollection.findOne({ _id: new ObjectId(paymentId) });
