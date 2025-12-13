@@ -213,6 +213,8 @@ const RenderForm: React.FC<{ schema: ZodObject<ZodRawShape>, draftSchema: ZodObj
 
   
   async function onSubmit(data: z.infer<typeof formSchema>) {
+    console.log("🔵 onSubmit called, isSaveDraft:", isSaveDraft);
+    console.log("🔵 Form data:", data);
     try {
       if (isSaveDraft) {
         setIsSubmittingDraft(true);
@@ -250,6 +252,7 @@ const RenderForm: React.FC<{ schema: ZodObject<ZodRawShape>, draftSchema: ZodObj
           });
         }
       } else {
+        console.log("🟢 Entering SUBMIT mode (not draft)");
         setIsSubmitting(true);
         const { jsonData, fileData } = splitDataAndFiles(data);
 
@@ -263,10 +266,12 @@ const RenderForm: React.FC<{ schema: ZodObject<ZodRawShape>, draftSchema: ZodObj
           fd.append(key, file);
         });
 
+        console.log("🟢 Calling API /api/form/saveForm with FormData");
         const response = await post<{ success: boolean; error?: { message: string } }>(
           `/api/form/saveForm`,
           fd
         );
+        console.log("🟢 API Response:", response);
 
         // Handle response for form submission
         if (response.data?.success) {
@@ -497,7 +502,7 @@ const maxDate = new Date(2009, 1, 1); // On or before 1 Feb 2009
                         const year = parseInt(value);
                         handleYearChange(year);
                       }}
-                      value={selectedYear ? String(selectedYear) : undefined}
+                      value={selectedYear ? String(selectedYear) : ""}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Year" />
@@ -515,7 +520,7 @@ const maxDate = new Date(2009, 1, 1); // On or before 1 Feb 2009
                         const month = parseInt(value);
                         handleMonthChange(month);
                       }}
-                      value={selectedMonth !== null ? String(selectedMonth) : undefined}
+                      value={selectedMonth !== null ? String(selectedMonth) : ""}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Month" />
@@ -563,7 +568,7 @@ const maxDate = new Date(2009, 1, 1); // On or before 1 Feb 2009
         control={form.control}
         name={name}
         render={({ field }) => {
-          const [selectedValue, setSelectedValue] = useState<string | undefined>(field.value || undefined); // Initialize with field.value
+          const [selectedValue, setSelectedValue] = useState<string>(field.value || ""); // Initialize with field.value or empty string
           
           return (
             <FormItem>
@@ -571,8 +576,7 @@ const maxDate = new Date(2009, 1, 1); // On or before 1 Feb 2009
               <Select
                 {...field}
                 onValueChange={(value) => {
-                  // If the selected value matches the placeholder, set to undefined
-                  field.onChange(value === placeholder ? undefined : value);
+                  field.onChange(value);
                   setSelectedValue(value);
                 }}
                 value={selectedValue}  // Ensure value is controlled
@@ -793,7 +797,7 @@ const maxDate = new Date(2009, 1, 1); // On or before 1 Feb 2009
             className="bg-white text-black hover:bg-slate-100 border-2 border-solid border-black font-semibold py-2.5 px-6  duration-200"
           >
             {isSubmittingDraft ? (
-              <div>Uploading files <div className="spinner-border animate-spin inline-block w-4 h-4 border-2 rounded-full"></div></div>
+              <div>Saving <div className="spinner-border animate-spin inline-block w-4 h-4 border-2 rounded-full"></div></div>
             ) : (
               "Save Draft"
             )}
@@ -847,7 +851,10 @@ const maxDate = new Date(2009, 1, 1); // On or before 1 Feb 2009
 
       <AlertDialogAction
         disabled={!agree || isSubmitting}
-        onClick={() => form.handleSubmit(onSubmit)()}
+        onClick={() => {
+          setIsSaveDraft(false);
+          form.handleSubmit(onSubmit)();
+        }}
         className={!agree ? "opacity-50 pointer-events-none" : ""}
       >
         {isSubmitting ? (
@@ -872,7 +879,7 @@ const maxDate = new Date(2009, 1, 1); // On or before 1 Feb 2009
             className="bg-white text-black hover:bg-slate-100 border-2 border-solid border-black font-semibold py-2.5 px-6  duration-200"
           >
             {isSubmittingDraft ? (
-              <div>Uploading files <div className="spinner-border animate-spin inline-block w-4 h-4 border-2 rounded-full"></div></div>
+              <div>Saving <div className="spinner-border animate-spin inline-block w-4 h-4 border-2 rounded-full"></div></div>
             ) : (
               "Save Draft"
             )}
@@ -926,7 +933,10 @@ const maxDate = new Date(2009, 1, 1); // On or before 1 Feb 2009
 
       <AlertDialogAction
         disabled={!agree || isSubmitting}
-        onClick={() => form.handleSubmit(onSubmit)()}
+        onClick={() => {
+          setIsSaveDraft(false);
+          form.handleSubmit(onSubmit)();
+        }}
         className={!agree ? "opacity-50 pointer-events-none" : ""}
       >
         {isSubmitting ? (

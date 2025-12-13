@@ -17,7 +17,7 @@ export async function GET(
     // 1. Validate fileId
     if (!fileId || !ObjectId.isValid(fileId)) {
       return NextResponse.json(
-        { error: "Invalid file ID" },
+        { success: false, message: "Invalid file ID" },
         { status: 400 }
       );
     }
@@ -31,7 +31,7 @@ export async function GET(
     const files = await bucket.find({ _id: new ObjectId(fileId) }).toArray();
     if (files.length === 0) {
       return NextResponse.json(
-        { error: "Payment proof not found" },
+        { success: false, message: "Payment proof not found" },
         { status: 404 }
       );
     }
@@ -69,7 +69,7 @@ export async function GET(
   } catch (error) {
     console.error("[Payment Proof] Download error:", error);
     return NextResponse.json(
-      { error: "Failed to download payment proof" },
+      { success: false, message: "Failed to download payment proof" },
       { status: 500 }
     );
   }

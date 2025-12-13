@@ -38,8 +38,8 @@ const SHEET_CONFIGS: Record<string, SheetConfig> = {
     headers: ["Name", "Email", "Contact Number", "University", "Verified", "Registration Done", "Payment Done", "Created At"]
   },
   payments: {
-    name: "Payments",
-    headers: ["Date", "Time", "Transaction ID", "Payment ID", "Payment Amount", "Account Holder Name", "University", "Sports", "Category", "Player Count", "Contact Number", "Email", "Payment Proof", "Verified?"]
+    name: "**Finance (Do Not Open)**",
+    headers: ["Date", "Time", "Transaction ID", "Payment ID", "Payment Amount", "Account Holder Name", "University", "Sports", "Category", "Player Count", "Contact Number", "Email", "Payment Proof", "Status", "Send Email?"]
   }
 };
 
@@ -80,6 +80,12 @@ export async function syncFormSubmission(formId: string): Promise<SyncResult> {
     if (!form) {
       console.error("[Sheets] Form not found:", formId);
       return { success: false, error: "Form not found" };
+    }
+
+    // Only sync forms with "submitted" status
+    if (form.status !== "submitted") {
+      console.log(`[Sheets] Skipping form ${formId} - status is "${form.status}", not "submitted"`);
+      return { success: true }; // Return success but don't sync
     }
 
     // Fetch owner data to get university name, email, phone
@@ -151,6 +157,12 @@ export async function syncUserRegistration(userId: string): Promise<SyncResult> 
     if (!user) {
       console.error("[Sheets] User not found:", userId);
       return { success: false, error: "User not found" };
+    }
+
+    // Only sync users with complete registration (phone and university)
+    if (!user.phone || !user.universityName) {
+      console.log(`[Sheets] Skipping user ${userId} - incomplete registration (missing phone or university)`);
+      return { success: true }; // Return success but don't sync
     }
 
     const row = [
@@ -272,7 +284,8 @@ export async function syncPaymentSubmission(paymentId: string): Promise<SyncResu
       userPhone,
       userEmail,
       payment.paymentProof ? `${process.env.ROOT_URL || ""}/api/payments/proof/${payment.paymentProof}` : "",
-      "In Progress"
+      "Not Started",
+      "No"
     ];
 
     // Update or append to Google Sheet
@@ -456,6 +469,51 @@ async function appendToSheet(sheetName: string, rows: string[][], maxRetries = 3
 }
 
 /**
+ * Ensure all required sheets exist in the spreadsheet
+ * Creates missing sheets with proper headers
+ */
+async function ensureRequiredSheets(sheets: ReturnType<typeof google.sheets>, spreadsheetId: string): Promise<void> {
+  try {
+    const response = await sheets.spreadsheets.get({ spreadsheetId });
+    const existingSheets = new Set(
+      response.data.sheets?.map(sheet => sheet.properties?.title).filter(Boolean) || []
+    );
+
+    const requests = [];
+
+    // Check each required sheet and create if missing
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    for (const [key, config] of Object.entries(SHEET_CONFIGS)) {
+      if (!existingSheets.has(config.name)) {
+        console.log(`[Sheets] Creating missing sheet: ${config.name}`);
+        requests.push({
+          addSheet: {
+            properties: {
+              title: config.name,
+              gridProperties: {
+                rowCount: 1000,
+                columnCount: config.headers.length
+              }
+            }
+          }
+        });
+      }
+    }
+
+    if (requests.length > 0) {
+      await sheets.spreadsheets.batchUpdate({
+        spreadsheetId,
+        requestBody: { requests }
+      });
+      console.log(`[Sheets] ✅ Created ${requests.length} missing sheet(s)`);
+    }
+  } catch (error) {
+    console.error("[Sheets] Error ensuring sheets exist:", error);
+    throw error;
+  }
+}
+
+/**
  * Get all sheet IDs from the spreadsheet
  */
 async function getSheetIds(sheets: ReturnType<typeof google.sheets>, spreadsheetId: string): Promise<Record<string, number>> {
@@ -582,12 +640,66 @@ async function formatSheets(sheets: ReturnType<typeof google.sheets>, spreadshee
       });
     });
 
+    // 5. Add dropdown validation for "Status" and "Send Email?" columns in Finance sheet
+    const financeSheetId = sheetIds[SHEET_CONFIGS.payments.name];
+    if (financeSheetId !== undefined) {
+      // Column N (index 13): "Status" dropdown
+      requests.push({
+        setDataValidation: {
+          range: {
+            sheetId: financeSheetId,
+            startRowIndex: 1, // Skip header
+            endRowIndex: 1000,
+            startColumnIndex: 13, // Column N (Status)
+            endColumnIndex: 14
+          },
+          rule: {
+            condition: {
+              type: 'ONE_OF_LIST',
+              values: [
+                { userEnteredValue: 'Confirmed' },
+                { userEnteredValue: 'Rejected' },
+                { userEnteredValue: 'In Progress' },
+                { userEnteredValue: 'Not Started' }
+              ]
+            },
+            showCustomUi: true,
+            strict: true
+          }
+        }
+      });
+
+      // Column O (index 14): "Send Email?" dropdown
+      requests.push({
+        setDataValidation: {
+          range: {
+            sheetId: financeSheetId,
+            startRowIndex: 1, // Skip header
+            endRowIndex: 1000,
+            startColumnIndex: 14, // Column O (Send Email?)
+            endColumnIndex: 15
+          },
+          rule: {
+            condition: {
+              type: 'ONE_OF_LIST',
+              values: [
+                { userEnteredValue: 'Yes' },
+                { userEnteredValue: 'No' }
+              ]
+            },
+            showCustomUi: true,
+            strict: true
+          }
+        }
+      });
+    }
+
     if (requests.length > 0) {
       await sheets.spreadsheets.batchUpdate({
         spreadsheetId,
         requestBody: { requests }
       });
-      console.log("[Sheets] ✅ All sheets formatted (headers, borders, colors)");
+      console.log("[Sheets] ✅ All sheets formatted (headers, borders, colors, dropdowns)");
     }
   } catch (error) {
     console.warn("[Sheets] Could not format sheets (non-critical):", error);
@@ -603,9 +715,13 @@ export async function initialFullSync(): Promise<InitialSyncResult> {
     const { db } = await connectToDatabase();
     const { sheets, spreadsheetId } = createSheetsClient();
 
-    // Sync forms
+    // Ensure all required sheets exist
+    console.log("[Sheets] Ensuring all sheets exist...");
+    await ensureRequiredSheets(sheets, spreadsheetId);
+
+    // Sync forms (only those with "submitted" status)
     console.log("[Sheets] Syncing forms...");
-    const forms = await db.collection("form").find({}).toArray();
+    const forms = await db.collection("form").find({ status: "submitted" }).toArray();
     
     // Fetch all owners in one query for efficiency
     const ownerIds = forms.map(f => f.ownerId).filter(Boolean);
@@ -664,9 +780,12 @@ export async function initialFullSync(): Promise<InitialSyncResult> {
       console.log(`[Sheets] ✅ Synced ${forms.length} forms`);
     }
 
-    // Sync users
+    // Sync users (only those with complete registration - phone and university)
     console.log("[Sheets] Syncing users...");
-    const users = await db.collection("users").find({}).toArray();
+    const users = await db.collection("users").find({
+      phone: { $exists: true, $ne: "" },
+      universityName: { $exists: true, $ne: "" }
+    }).toArray();
     if (users.length > 0) {
       const userRows = users.map(doc => [
         String(doc.name || ""),
@@ -763,7 +882,8 @@ export async function initialFullSync(): Promise<InitialSyncResult> {
           owner ? String(owner.phone || "") : "",
           owner ? String(owner.email || "") : "",
           doc.paymentProof ? `${process.env.ROOT_URL || ""}api/payments/proof/${doc.paymentProof}` : "",
-          "In Progress"
+          "Not Started",
+          "No"
         ];
       });
 

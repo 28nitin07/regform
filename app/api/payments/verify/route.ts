@@ -4,36 +4,59 @@ import { ObjectId } from "mongodb";
 import { sendPaymentConfirmedEmail } from "@/app/utils/mailer/PaymentConfirmedEmail";
 
 /**
- * POST endpoint to handle payment verification webhook from Google Sheets
- * When "Verified?" column is changed to "Yes", this sends confirmation email
+ * POST endpoint to handle registration confirmation webhook from Google Sheets
+ * When "Send Email?" column is changed to "Yes", this sends confirmation email using registration-confirmed.html
+ * 
+ * SECURITY: Requires WEBHOOK_SECRET header for authentication
  * 
  * Usage: POST /api/payments/verify
- * Body: { paymentId: string, status: "Yes" | "No" | "In Progress" }
+ * Headers: { "x-webhook-secret": "<WEBHOOK_SECRET>" }
+ * Body: { paymentId: string, sendEmail: "Yes" | "No" }
  */
 export async function POST(req: NextRequest) {
   try {
+    // Validate webhook authentication
+    const webhookSecret = req.headers.get("x-webhook-secret");
+    const expectedSecret = process.env.WEBHOOK_SECRET;
+
+    if (!expectedSecret) {
+      console.error("❌ WEBHOOK_SECRET not configured in environment variables");
+      return NextResponse.json(
+        { success: false, message: "Webhook not configured" },
+        { status: 500 }
+      );
+    }
+
+    if (!webhookSecret || webhookSecret !== expectedSecret) {
+      console.warn("🚨 Unauthorized webhook attempt from:", req.headers.get("x-forwarded-for") || "unknown");
+      return NextResponse.json(
+        { success: false, message: "Unauthorized: Invalid webhook secret" },
+        { status: 401 }
+      );
+    }
+
     const body = await req.json();
-    const { paymentId, status } = body;
+    const { paymentId, sendEmail } = body;
 
     // Validate input
     if (!paymentId) {
       return NextResponse.json(
-        { error: "Payment ID is required" },
+        { success: false, message: "Payment ID is required" },
         { status: 400 }
       );
     }
 
     if (!ObjectId.isValid(paymentId)) {
       return NextResponse.json(
-        { error: "Invalid payment ID format" },
+        { success: false, message: "Invalid payment ID format" },
         { status: 400 }
       );
     }
 
-    // Only send email when status changes to "Yes"
-    if (status !== "Yes") {
+    // Only send email when sendEmail is "Yes"
+    if (sendEmail !== "Yes") {
       return NextResponse.json(
-        { success: true, message: "Status updated, no email sent" },
+        { success: true, message: "Send Email status updated, no email sent" },
         { status: 200 }
       );
     }
@@ -41,14 +64,14 @@ export async function POST(req: NextRequest) {
     const { db } = await connectToDatabase();
     const paymentsCollection = db.collection("payments");
     const usersCollection = db.collection("users");
-    const formsCollection = db.collection("forms");
+    const formsCollection = db.collection("form");
 
     // Get payment details
     const payment = await paymentsCollection.findOne({ _id: new ObjectId(paymentId) });
 
     if (!payment) {
       return NextResponse.json(
-        { error: "Payment not found" },
+        { success: false, message: "Payment not found" },
         { status: 404 }
       );
     }
@@ -58,7 +81,7 @@ export async function POST(req: NextRequest) {
 
     if (!user || !user.email) {
       return NextResponse.json(
-        { error: "User email not found" },
+        { success: false, message: "User email not found" },
         { status: 404 }
       );
     }
@@ -93,17 +116,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         success: true,
-        message: "Payment verification email sent successfully",
+        message: "Registration confirmation email sent successfully",
         email: user.email
       },
       { status: 200 }
     );
 
   } catch (error) {
-    console.error("❌ Error in payment verification webhook:", error);
+    console.error("❌ Error in registration confirmation webhook:", error);
     return NextResponse.json(
       {
-        error: "Failed to process payment verification",
+        success: false,
+        message: "Failed to send registration confirmation email",
         details: error instanceof Error ? error.message : String(error)
       },
       { status: 500 }
