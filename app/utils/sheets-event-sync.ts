@@ -82,6 +82,12 @@ export async function syncFormSubmission(formId: string): Promise<SyncResult> {
       return { success: false, error: "Form not found" };
     }
 
+    // Only sync forms with "submitted" status
+    if (form.status !== "submitted") {
+      console.log(`[Sheets] Skipping form ${formId} - status is "${form.status}", not "submitted"`);
+      return { success: true }; // Return success but don't sync
+    }
+
     // Fetch owner data to get university name, email, phone
     let ownerUniversity = "";
     let ownerEmail = "";
@@ -658,9 +664,9 @@ export async function initialFullSync(): Promise<InitialSyncResult> {
     const { db } = await connectToDatabase();
     const { sheets, spreadsheetId } = createSheetsClient();
 
-    // Sync forms
+    // Sync forms (only those with "submitted" status)
     console.log("[Sheets] Syncing forms...");
-    const forms = await db.collection("form").find({}).toArray();
+    const forms = await db.collection("form").find({ status: "submitted" }).toArray();
     
     // Fetch all owners in one query for efficiency
     const ownerIds = forms.map(f => f.ownerId).filter(Boolean);
