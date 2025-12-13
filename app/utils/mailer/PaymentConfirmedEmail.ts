@@ -97,12 +97,13 @@ export async function sendPaymentConfirmedEmail(
             .replace(/{{#if sportsTable}}[\s\S]*?{{sportsTable}}[\s\S]*?{{\/if}}/g, `<table class="payment-table">${paymentData}</table>`)
             .replace(/{{#if remarks}}[\s\S]*?{{\/if}}/g, ''); // Remove remarks section
 
-        // Send email
+        // Send email (separate thread with unique subject and message ID)
         await transporter.sendMail({
-            from: `"Agneepath Payments" <${SMTP_USER}>`,
+            from: `"Agneepath Registration" <${SMTP_USER}>`,
             to: formData.email,
-            subject: `Payment Confirmed ✅ - Transaction ID: ${formData.transactionId}`,
+            subject: `Registration Confirmed for Agneepath 7.0 | ${formData.universityName || 'Participant'}`,
             html: htmlTemplate,
+            messageId: `<agneepath-confirmation-${formData.paymentId}-${Date.now()}@agneepath.co.in>`,
         });
 
         console.log(`✅ Payment confirmation email sent to ${formData.email} (Transaction: ${formData.transactionId})`);
