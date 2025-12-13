@@ -76,21 +76,26 @@ export async function sendPaymentConfirmedEmail(
         const templatePath = path.join(process.cwd(), "templates", "payment-confirmed.html");
         let htmlTemplate = fs.readFileSync(templatePath, "utf8");
 
-        // Replace placeholders
+        // Replace placeholders to match template
         htmlTemplate = htmlTemplate
-            .replace(/{{name}}/g, formData.name || '')
+            .replace(/{{name}}/g, formData.name || 'Participant')
+            .replace(/{{registration_id}}/g, formData.paymentId || '')
+            .replace(/{{payeeName}}/g, formData.name || '')
             .replace(/{{institution}}/g, formData.universityName || '')
-            .replace(/{{payment_id}}/g, formData.paymentId || '')
-            .replace(/{{transaction_id}}/g, formData.transactionId || '')
-            .replace(/{{amount}}/g, formData.amountInNumbers.toLocaleString('en-IN'))
-            .replace(/{{amount_words}}/g, formData.amountInWords.toUpperCase())
-            .replace(/{{payment_date}}/g, new Date(formData.paymentDate).toLocaleDateString('en-IN', {
+            .replace(/{{paymentTypes}}/g, 'Registration Fee')
+            .replace(/{{paymentMode}}/g, 'Online')
+            .replace(/{{amountInNumbers}}/g, formData.amountInNumbers.toLocaleString('en-IN'))
+            .replace(/{{amountInWords}}/g, formData.amountInWords.toUpperCase())
+            .replace(/{{transactionId}}/g, formData.transactionId || '')
+            .replace(/{{paymentDate}}/g, new Date(formData.paymentDate).toLocaleDateString('en-IN', {
                 year: 'numeric',
                 month: 'long',
                 day: 'numeric'
             }))
             .replace(/{{current_year}}/g, new Date().getFullYear().toString())
-            .replace(/{{payment_data_rows}}/g, paymentData);
+            // Remove handlebars conditionals and replace with sports table
+            .replace(/{{#if sportsTable}}[\s\S]*?{{sportsTable}}[\s\S]*?{{\/if}}/g, `<table class="payment-table">${paymentData}</table>`)
+            .replace(/{{#if remarks}}[\s\S]*?{{\/if}}/g, ''); // Remove remarks section
 
         // Send email
         await transporter.sendMail({
