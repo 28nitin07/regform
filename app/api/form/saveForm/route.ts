@@ -190,7 +190,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { db } = await connectToDatabase();
+    // Reuse the database connection from line 114
     const formCollection: Collection = db.collection("form");
 
     // Fetch form data based on formId
