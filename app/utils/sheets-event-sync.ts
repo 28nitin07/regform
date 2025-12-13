@@ -482,6 +482,7 @@ async function ensureRequiredSheets(sheets: ReturnType<typeof google.sheets>, sp
     const requests = [];
 
     // Check each required sheet and create if missing
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     for (const [key, config] of Object.entries(SHEET_CONFIGS)) {
       if (!existingSheets.has(config.name)) {
         console.log(`[Sheets] Creating missing sheet: ${config.name}`);

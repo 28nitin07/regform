@@ -7,11 +7,11 @@ import { rateLimit, rateLimitPresets } from "@/app/utils/rateLimit";
 import { handleCors, addCorsHeaders } from "@/app/utils/cors";
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-const JWT_SECRET = process.env.JWT_SECRET;
-
-if (!JWT_SECRET) {
+if (!process.env.JWT_SECRET) {
   throw new Error("JWT_SECRET environment variable is not configured. Please set JWT_SECRET in your .env file.");
 }
+
+const JWT_SECRET: string = process.env.JWT_SECRET;
 
 export async function POST(req: NextRequest) {
   const origin = req.headers.get("origin");

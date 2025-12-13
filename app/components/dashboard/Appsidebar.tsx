@@ -115,8 +115,8 @@ const getAuthToken = (): string | null => {
   const [loading, setLoading] = useState(false)
   const [registrationDone, setRegistrationDone] = useState<boolean | null>(null)
   const [paymentDone, setPaymentDone] = useState<boolean | null>(null)
-  const [_hasAnyForm, setHasAnyForm] = useState<boolean>(false)
-  const [_hasSubmitted, setHasSubmitted] = useState<boolean>(false)
+  const [, setHasAnyForm] = useState<boolean>(false)
+  const [, setHasSubmitted] = useState<boolean>(false)
   
   const [faqOpen, setFaqOpen] = useState(false)
   const [faqContent, setFaqContent] = useState<string>("")
