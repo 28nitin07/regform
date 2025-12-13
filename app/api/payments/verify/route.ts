@@ -7,11 +7,34 @@ import { sendPaymentConfirmedEmail } from "@/app/utils/mailer/PaymentConfirmedEm
  * POST endpoint to handle registration confirmation webhook from Google Sheets
  * When "Send Email?" column is changed to "Yes", this sends confirmation email using registration-confirmed.html
  * 
+ * SECURITY: Requires WEBHOOK_SECRET header for authentication
+ * 
  * Usage: POST /api/payments/verify
+ * Headers: { "x-webhook-secret": "<WEBHOOK_SECRET>" }
  * Body: { paymentId: string, sendEmail: "Yes" | "No" }
  */
 export async function POST(req: NextRequest) {
   try {
+    // Validate webhook authentication
+    const webhookSecret = req.headers.get("x-webhook-secret");
+    const expectedSecret = process.env.WEBHOOK_SECRET;
+
+    if (!expectedSecret) {
+      console.error("❌ WEBHOOK_SECRET not configured in environment variables");
+      return NextResponse.json(
+        { success: false, message: "Webhook not configured" },
+        { status: 500 }
+      );
+    }
+
+    if (!webhookSecret || webhookSecret !== expectedSecret) {
+      console.warn("🚨 Unauthorized webhook attempt from:", req.headers.get("x-forwarded-for") || "unknown");
+      return NextResponse.json(
+        { success: false, message: "Unauthorized: Invalid webhook secret" },
+        { status: 401 }
+      );
+    }
+
     const body = await req.json();
     const { paymentId, sendEmail } = body;
 
