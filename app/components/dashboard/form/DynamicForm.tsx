@@ -502,7 +502,7 @@ const maxDate = new Date(2009, 1, 1); // On or before 1 Feb 2009
                         const year = parseInt(value);
                         handleYearChange(year);
                       }}
-                      value={selectedYear ? String(selectedYear) : undefined}
+                      value={selectedYear ? String(selectedYear) : ""}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Year" />
@@ -520,7 +520,7 @@ const maxDate = new Date(2009, 1, 1); // On or before 1 Feb 2009
                         const month = parseInt(value);
                         handleMonthChange(month);
                       }}
-                      value={selectedMonth !== null ? String(selectedMonth) : undefined}
+                      value={selectedMonth !== null ? String(selectedMonth) : ""}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Month" />
@@ -568,7 +568,7 @@ const maxDate = new Date(2009, 1, 1); // On or before 1 Feb 2009
         control={form.control}
         name={name}
         render={({ field }) => {
-          const [selectedValue, setSelectedValue] = useState<string | undefined>(field.value || undefined); // Initialize with field.value
+          const [selectedValue, setSelectedValue] = useState<string>(field.value || ""); // Initialize with field.value or empty string
           
           return (
             <FormItem>
@@ -576,8 +576,7 @@ const maxDate = new Date(2009, 1, 1); // On or before 1 Feb 2009
               <Select
                 {...field}
                 onValueChange={(value) => {
-                  // If the selected value matches the placeholder, set to undefined
-                  field.onChange(value === placeholder ? undefined : value);
+                  field.onChange(value);
                   setSelectedValue(value);
                 }}
                 value={selectedValue}  // Ensure value is controlled
