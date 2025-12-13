@@ -6,7 +6,7 @@ import { fetchUserData } from "@/app/utils/GetUpdateUser";
 
 /**
  * GET endpoint to download payment proof files from GridFS
- * Requires authentication - users can only access their own payment proofs or admins can access all
+ * Requires authentication only - no admin restriction
  * Usage: /api/payments/proof/[fileId]
  */
 export async function GET(
@@ -25,32 +25,11 @@ export async function GET(
       );
     }
 
-    // 2. Get user data
-    const userResponse = await fetchUserData("email", email, ["_id"]);
-    if (!userResponse.success || !userResponse.data?._id) {
-      return NextResponse.json(
-        { error: "User not found" },
-        { status: 404 }
-      );
-    }
-    const userId = userResponse.data._id;
-
-    // 3. Validate fileId
+    // 2. Validate fileId
     if (!fileId || !ObjectId.isValid(fileId)) {
       return NextResponse.json(
         { error: "Invalid file ID" },
         { status: 400 }
-      );
-    }
-
-    // 4. Admin-only access check
-    const adminEmails = process.env.ADMIN_EMAILS?.split(',').map(e => e.trim()) || [];
-    const isAdmin = adminEmails.length > 0 && adminEmails.includes(email);
-    
-    if (!isAdmin) {
-      return NextResponse.json(
-        { error: "Forbidden: Admin access required to view payment proofs" },
-        { status: 403 }
       );
     }
 

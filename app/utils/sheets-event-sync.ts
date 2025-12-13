@@ -39,7 +39,7 @@ const SHEET_CONFIGS: Record<string, SheetConfig> = {
   },
   payments: {
     name: "Payments",
-    headers: ["Date", "Time", "Transaction ID", "Payment ID", "Payment Amount", "Account Holder Name", "Sports", "Category", "Player Count", "Contact Number", "Email", "Payment Proof"]
+    headers: ["Date", "Time", "Transaction ID", "Payment ID", "Payment Amount", "Account Holder Name", "University", "Sports", "Category", "Player Count", "Contact Number", "Email", "Payment Proof"]
   }
 };
 
@@ -265,6 +265,7 @@ export async function syncPaymentSubmission(paymentId: string): Promise<SyncResu
       payment._id.toString(),
       String(payment.amountInNumbers || ""),
       String(payment.payeeName || ""),
+      String(user?.universityName || ""),
       sports,
       category,
       numberOfPeople.toString(),
@@ -754,6 +755,7 @@ export async function initialFullSync(): Promise<InitialSyncResult> {
           doc._id.toString(),
           String(doc.amountInNumbers || ""),
           String(doc.payeeName || ""),
+          owner ? String(owner.universityName || "") : "",
           sports,
           category,
           numberOfPeople.toString(),
