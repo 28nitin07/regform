@@ -43,10 +43,22 @@ function formatFieldName(key: string): string {
 }
 
 async function sendConfirmationEmail(formData: FormData) {
+    // Validate email address
+    if (!formData.email) {
+        throw new Error("Email address is required and must be valid.");
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+        throw new Error(`Invalid email address format${formData.email ? `: ${formData.email}` : ""}`);
+    }
+
     const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS } = process.env;
 
     if (!SMTP_USER || !SMTP_PASS) {
         throw new Error("Email configuration missing in environment variables");
+    }
+
+    if (!SMTP_USER.trim() || !SMTP_PASS.trim()) {
+        throw new Error("Email configuration contains empty values");
     }
 
     const transporter = nodemailer.createTransport({
@@ -135,6 +147,8 @@ async function sendConfirmationEmail(formData: FormData) {
       html: emailContent,
       attachments,
   });
+
+  console.log(`✅ Registration confirmation email sent to ${formData.email} for ${sports[formData.title]}`);
 }
 
 export default sendConfirmationEmail;
