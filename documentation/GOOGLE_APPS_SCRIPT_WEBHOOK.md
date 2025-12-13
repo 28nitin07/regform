@@ -14,6 +14,47 @@ If you haven't set up Google Apps Script yet, follow these steps:
 3. A new tab will open with the Apps Script editor
 4. You should see a file called `Code.gs` (or it might be empty)
 
+#### ⚠️ Troubleshooting: "Bad Request Error 400"
+
+If you see **"Bad Request Error 400"** when clicking Apps Script, try these solutions:
+
+**Solution 1: Check Sheet Ownership**
+- You must **own** the Google Sheet to add Apps Script
+- If someone shared it with you, ask them to make you an **owner** (not just editor)
+- Or **make a copy**: File → Make a copy (you'll own the copy)
+
+**Solution 2: Clear Browser Data**
+1. Close the Google Sheet tab
+2. Clear browser cache and cookies:
+   - Chrome: `Ctrl/Cmd + Shift + Delete` → Clear cache & cookies for "All time"
+   - Make sure to select both "Cookies" and "Cached images and files"
+3. Restart your browser
+4. Open the sheet again and try Extensions → Apps Script
+
+**Solution 3: Try Incognito/Private Mode**
+1. Open the sheet in incognito/private browsing mode
+2. Sign in to your Google account
+3. Try Extensions → Apps Script
+4. If it works, the issue is browser cache (use Solution 2)
+
+**Solution 4: Check Google Account**
+- Make sure you're signed in with the correct Google account
+- Switch accounts in the top-right corner if needed
+- Some organizational accounts restrict Apps Script access
+
+**Solution 5: Direct URL Method**
+If none of the above work, try accessing Apps Script directly:
+1. Get your spreadsheet ID from the URL:
+   ```
+   https://docs.google.com/spreadsheets/d/[SPREADSHEET_ID]/edit
+   ```
+2. Go to: `https://script.google.com/home/projects/[YOUR_SPREADSHEET_ID]`
+3. Or go to: https://script.google.com/home and click "New Project"
+4. In the new project, you can add the webhook code manually
+
+**Solution 6: Create Standalone Script (Detailed Instructions Below)**
+If you still can't access Apps Script from the sheet, scroll down to the "Standalone Apps Script Setup" section for complete instructions.
+
 ### Step 3: Add the Webhook Code
 1. **Delete any existing code** in the editor (if there's any sample code)
 2. **Copy the complete code** from the "Complete Working Code" section below
@@ -25,10 +66,13 @@ If you haven't set up Google Apps Script yet, follow these steps:
 1. After saving, you might see a prompt to authorize the script
 2. Click **Review Permissions**
 3. Choose your Google account
-4. Click **Advanced** → **Go to [Project Name] (unsafe)**
-5. Click **Allow** to give the script permission to:
+4. You might see "Google hasn't verified this app" warning
+5. Click **Advanced** → **Go to [Project Name] (unsafe)**
+6. Click **Allow** to give the script permission to:
    - Access your spreadsheet
    - Make external HTTP requests (to your webhook)
+
+**Note**: The "unsafe" warning is normal for custom scripts. You're authorizing your own code.
 
 ### Step 5: Test the Setup
 1. Go back to your Google Sheet
@@ -204,6 +248,171 @@ Then update:
 2. `.env.production` - WEBHOOK_SECRET=<new_secret>
 3. Google Apps Script - WEBHOOK_SECRET variable
 4. Restart your application
+
+---
+
+---
+
+## 🔧 Standalone Apps Script Setup
+
+If you can't access Apps Script from the sheet (Error 400), use this method:
+
+### Step 1: Get Your Spreadsheet ID
+
+1. Open your Google Sheet
+2. Look at the URL in your browser:
+   ```
+   https://docs.google.com/spreadsheets/d/1SiiXnYOxEqUexZ6aCB_pUn0kuH8nUpjeTcUgHjvgzqA/edit
+   ```
+3. Copy the long ID between `/d/` and `/edit`
+4. Example: `1SiiXnYOxEqUexZ6aCB_pUn0kuH8nUpjeTcUgHjvgzqA`
+
+### Step 2: Create New Standalone Script
+
+1. Go to: https://script.google.com/home
+2. Click **New Project** (blue button)
+3. You'll see an empty editor with `function myFunction() {}`
+
+### Step 3: Paste Standalone Code
+
+Delete everything and paste this code:
+
+```javascript
+// ===== CONFIGURATION =====
+// Replace with your actual Spreadsheet ID
+var SPREADSHEET_ID = "1SiiXnYOxEqUexZ6aCB_pUn0kuH8nUpjeTcUgHjvgzqA";
+var SHEET_NAME = "**Finance (Do Not Open)**";
+var SEND_EMAIL_COLUMN = 15; // Column O
+var PAYMENT_ID_COLUMN = 4;  // Column D
+
+// Webhook configuration
+var WEBHOOK_SECRET = "ae72ec02779d84c226fc146670e863dde21a1b8f95a8dc83f3fc091024ead1c3";
+var WEBHOOK_URL = "https://register.agneepath.co.in/api/payments/verify";
+
+// ===== MAIN FUNCTION =====
+function onEdit(e) {
+  try {
+    // Get the spreadsheet and sheet
+    var spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+    var sheet = e.source.getActiveSheet();
+    var sheetName = sheet.getName();
+    
+    // Check if the edit was in the Finance sheet
+    if (sheetName !== SHEET_NAME) {
+      return;
+    }
+    
+    var range = e.range;
+    var column = range.getColumn();
+    
+    // Check if "Send Email?" column was edited
+    if (column !== SEND_EMAIL_COLUMN) {
+      return;
+    }
+    
+    var row = range.getRow();
+    var sendEmail = range.getValue();
+    
+    // Only proceed if "Send Email?" is changed to "Yes"
+    if (sendEmail !== "Yes") {
+      return;
+    }
+    
+    // Get payment ID from the same row
+    var paymentId = sheet.getRange(row, PAYMENT_ID_COLUMN).getValue();
+    
+    if (!paymentId) {
+      Logger.log("❌ Payment ID is empty in row " + row);
+      return;
+    }
+    
+    // Call webhook with authentication
+    var payload = {
+      paymentId: paymentId,
+      sendEmail: sendEmail
+    };
+    
+    var options = {
+      method: "post",
+      contentType: "application/json",
+      headers: {
+        "x-webhook-secret": WEBHOOK_SECRET
+      },
+      payload: JSON.stringify(payload),
+      muteHttpExceptions: true
+    };
+    
+    Logger.log("🔔 Calling webhook for Payment ID: " + paymentId);
+    
+    var response = UrlFetchApp.fetch(WEBHOOK_URL, options);
+    var responseCode = response.getResponseCode();
+    
+    if (responseCode === 200) {
+      Logger.log("✅ Email sent successfully");
+    } else if (responseCode === 401) {
+      Logger.log("❌ Authentication failed - check webhook secret");
+    } else {
+      Logger.log("⚠️ Webhook response (" + responseCode + "): " + response.getContentText());
+    }
+  } catch (error) {
+    Logger.log("❌ Webhook error: " + error.toString());
+  }
+}
+``` 
+
+### Step 4: Configure Your Settings
+
+At the top of the code, replace these values:
+
+1. **SPREADSHEET_ID**: Your sheet ID (from Step 1)
+2. **SHEET_NAME**: Usually `"**Finance (Do Not Open)**"` (keep the asterisks if your sheet has them)
+3. **SEND_EMAIL_COLUMN**: `15` for column O (or count manually from A=1, B=2... O=15)
+4. **PAYMENT_ID_COLUMN**: `4` for column D (where your Payment IDs are)
+
+### Step 5: Save and Name Project
+
+1. Click the disk icon or press `Ctrl/Cmd + S`
+2. Name it: "Payment Verification Webhook"
+3. Wait for "Saved" confirmation
+
+### Step 6: Set Up Trigger
+
+1. Click the **clock icon** ⏰ (Triggers) on the left sidebar
+2. Click **Add Trigger** (bottom right)
+3. Configure:
+   - **Choose which function to run**: `onEdit`
+   - **Choose which deployment should run**: `Head`
+   - **Select event source**: `From spreadsheet`
+   - **Select event type**: `On edit`
+   - **Failure notification settings**: `Notify me daily` (recommended)
+4. Click **Save**
+
+### Step 7: Authorize
+
+1. You'll see "Authorization required"
+2. Click **Review Permissions**
+3. Choose your Google account
+4. Click **Advanced** → **Go to Payment Verification Webhook (unsafe)**
+5. Click **Allow**
+
+### Step 8: Test
+
+1. Go back to your Google Sheet
+2. Find a row with a Payment ID
+3. Change "Send Email?" to "Yes"
+4. Wait 5-10 seconds
+5. Go back to Apps Script and click **View → Executions**
+6. You should see the execution log with "✅ Email sent successfully"
+
+### Troubleshooting Standalone Script
+
+| Issue | Solution |
+|-------|----------|
+| "Cannot find spreadsheet" | Check SPREADSHEET_ID is correct |
+| "Sheet not found" | Check SHEET_NAME exactly matches (including asterisks) |
+| Script doesn't run | Make sure trigger is set up (Step 6) |
+| Permission denied | Re-run authorization (Step 7) |
+| No logs appearing | Check View → Executions (not View → Logs) |
 
 ---
 
