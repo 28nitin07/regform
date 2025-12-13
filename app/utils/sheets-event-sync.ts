@@ -159,6 +159,12 @@ export async function syncUserRegistration(userId: string): Promise<SyncResult> 
       return { success: false, error: "User not found" };
     }
 
+    // Only sync users with complete registration (phone and university)
+    if (!user.phone || !user.universityName) {
+      console.log(`[Sheets] Skipping user ${userId} - incomplete registration (missing phone or university)`);
+      return { success: true }; // Return success but don't sync
+    }
+
     const row = [
       String(user.name || ""),
       String(user.email || ""),
@@ -773,9 +779,12 @@ export async function initialFullSync(): Promise<InitialSyncResult> {
       console.log(`[Sheets] ✅ Synced ${forms.length} forms`);
     }
 
-    // Sync users
+    // Sync users (only those with complete registration - phone and university)
     console.log("[Sheets] Syncing users...");
-    const users = await db.collection("users").find({}).toArray();
+    const users = await db.collection("users").find({
+      phone: { $exists: true, $ne: "" },
+      universityName: { $exists: true, $ne: "" }
+    }).toArray();
     if (users.length > 0) {
       const userRows = users.map(doc => [
         String(doc.name || ""),
