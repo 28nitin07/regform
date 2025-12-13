@@ -8,12 +8,16 @@ set -e  # Exit on error
 # Configuration
 # ============================================
 
-BACKUP_DIR="$HOME/backups/regform"
-MONGODB_URI="mongodb://127.0.0.1:27017/production"
-DB_NAME="production"
-UPLOAD_PATH="$HOME/regform/public/uploads"
-PROJECT_DIR="$HOME/regform"
-GDRIVE_REMOTE="agneepath-gdrive:server-backups"
+# Get script directory
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+
+# Paths - work with both production and local
+BACKUP_DIR="${BACKUP_DIR:-$HOME/backups/regform}"
+MONGODB_URI="${MONGODB_URI:-mongodb://127.0.0.1:27017/production}"
+DB_NAME="${DB_NAME:-production}"
+UPLOAD_PATH="${UPLOAD_PATH:-$PROJECT_DIR/public/uploads}"
+GDRIVE_REMOTE="${GDRIVE_REMOTE:-agneepath-gdrive:server-backups}"
 
 # ============================================
 # Functions
@@ -110,8 +114,22 @@ restore_mongodb() {
     
     echo "🔄 Restoring MongoDB from: $(basename $backup_file)"
     
+    # Validate backup file exists
+    if [ ! -f "$backup_file" ]; then
+        echo "❌ Error: Backup file not found: $backup_file"
+        exit 1
+    fi
+    
+    # Validate backup is not corrupted
+    echo "🔍 Validating backup file..."
+    if ! tar -tzf "$backup_file" >/dev/null 2>&1; then
+        echo "❌ Error: Backup file is corrupted or invalid"
+        exit 1
+    fi
+    
     # Extract backup
     TEMP_DIR=$(mktemp -d)
+    echo "📦 Extracting backup..."
     tar -xzf "$backup_file" -C "$TEMP_DIR"
     
     # Find the dump directory
@@ -119,12 +137,21 @@ restore_mongodb() {
     
     if [ -z "$DUMP_DIR" ]; then
         echo "❌ Error: Could not find database dump in backup"
+        echo "   Expected database name: $DB_NAME"
         rm -rf "$TEMP_DIR"
         exit 1
     fi
     
+    # Show what will be restored
+    echo ""
+    echo "Backup contains:"
+    ls -lh "$DUMP_DIR"
+    echo ""
+    
     # Confirm restoration
     echo "⚠️  WARNING: This will OVERWRITE the current database!"
+    echo "   Database: $DB_NAME"
+    echo "   URI: $MONGODB_URI"
     read -p "Are you sure you want to continue? (yes/no): " confirm
     
     if [ "$confirm" != "yes" ]; then
@@ -135,12 +162,21 @@ restore_mongodb() {
     
     # Drop existing database
     echo "🗑️  Dropping existing database..."
-    mongosh "$MONGODB_URI" --quiet --eval "db.dropDatabase()"
+    if mongosh "$MONGODB_URI" --quiet --eval "db.dropDatabase()" 2>&1 | grep -q "ok"; then
+        echo "✅ Database dropped"
+    else
+        echo "⚠️  Could not drop database (may not exist)"
+    fi
     
     # Restore from backup
     echo "📥 Restoring database..."
     if mongorestore --uri="$MONGODB_URI" --db="$DB_NAME" "$DUMP_DIR" --quiet; then
         echo "✅ MongoDB restored successfully"
+        
+        # Verify restoration
+        echo "🔍 Verifying restoration..."
+        COLLECTION_COUNT=$(mongosh "$MONGODB_URI" --quiet --eval "db.getCollectionNames().length")
+        echo "   Collections restored: $COLLECTION_COUNT"
     else
         echo "❌ MongoDB restoration failed"
         rm -rf "$TEMP_DIR"
@@ -156,8 +192,28 @@ restore_uploads() {
     
     echo "🔄 Restoring uploads from: $(basename $backup_file)"
     
+    # Validate backup file
+    if [ ! -f "$backup_file" ]; then
+        echo "❌ Error: Backup file not found: $backup_file"
+        exit 1
+    fi
+    
+    # Validate backup integrity
+    echo "🔍 Validating backup file..."
+    if ! tar -tzf "$backup_file" >/dev/null 2>&1; then
+        echo "❌ Error: Backup file is corrupted or invalid"
+        exit 1
+    fi
+    
+    # Show backup contents
+    echo ""
+    echo "Backup contains:"
+    tar -tzf "$backup_file" | head -10
+    echo ""
+    
     # Confirm restoration
     echo "⚠️  WARNING: This will OVERWRITE existing uploaded files!"
+    echo "   Target directory: $UPLOAD_PATH"
     read -p "Are you sure you want to continue? (yes/no): " confirm
     
     if [ "$confirm" != "yes" ]; then
@@ -166,21 +222,37 @@ restore_uploads() {
     fi
     
     # Backup current uploads
+    BACKUP_TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
     if [ -d "$UPLOAD_PATH" ]; then
-        BACKUP_TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
         echo "📦 Backing up current uploads..."
         mv "$UPLOAD_PATH" "${UPLOAD_PATH}_backup_${BACKUP_TIMESTAMP}"
+        echo "   Backup saved to: ${UPLOAD_PATH}_backup_${BACKUP_TIMESTAMP}"
     fi
     
     # Extract uploads
     mkdir -p "$(dirname "$UPLOAD_PATH")"
+    echo "📥 Extracting uploads..."
     if tar -xzf "$backup_file" -C "$(dirname "$UPLOAD_PATH")"; then
+        FILE_COUNT=$(find "$UPLOAD_PATH" -type f 2>/dev/null | wc -l | tr -d ' ')
         echo "✅ Uploads restored successfully"
+        echo "   Files restored: $FILE_COUNT"
+        
+        # Ask if old backup should be deleted
+        if [ -d "${UPLOAD_PATH}_backup_${BACKUP_TIMESTAMP}" ]; then
+            read -p "Delete old backup? (yes/no): " delete_old
+            if [ "$delete_old" = "yes" ]; then
+                rm -rf "${UPLOAD_PATH}_backup_${BACKUP_TIMESTAMP}"
+                echo "   Old backup deleted"
+            fi
+        fi
     else
         echo "❌ Uploads restoration failed"
         # Restore backup
         if [ -d "${UPLOAD_PATH}_backup_${BACKUP_TIMESTAMP}" ]; then
+            echo "🔄 Rolling back to previous state..."
+            rm -rf "$UPLOAD_PATH"
             mv "${UPLOAD_PATH}_backup_${BACKUP_TIMESTAMP}" "$UPLOAD_PATH"
+            echo "   Rollback completed"
         fi
         exit 1
     fi
