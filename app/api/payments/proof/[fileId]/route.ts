@@ -19,7 +19,7 @@ export async function GET(
     const email = getEmailFromToken(request);
     if (!email) {
       return NextResponse.json(
-        { error: "Unauthorized: Invalid token or not logged in" },
+        { success: false, message: "Unauthorized: Invalid token or not logged in" },
         { status: 401 }
       );
     }
@@ -27,7 +27,7 @@ export async function GET(
     // 2. Validate fileId
     if (!fileId || !ObjectId.isValid(fileId)) {
       return NextResponse.json(
-        { error: "Invalid file ID" },
+        { success: false, message: "Invalid file ID" },
         { status: 400 }
       );
     }
@@ -41,7 +41,7 @@ export async function GET(
     const files = await bucket.find({ _id: new ObjectId(fileId) }).toArray();
     if (files.length === 0) {
       return NextResponse.json(
-        { error: "Payment proof not found" },
+        { success: false, message: "Payment proof not found" },
         { status: 404 }
       );
     }
@@ -79,7 +79,7 @@ export async function GET(
   } catch (error) {
     console.error("[Payment Proof] Download error:", error);
     return NextResponse.json(
-      { error: "Failed to download payment proof" },
+      { success: false, message: "Failed to download payment proof" },
       { status: 500 }
     );
   }

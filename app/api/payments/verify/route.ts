@@ -18,14 +18,14 @@ export async function POST(req: NextRequest) {
     // Validate input
     if (!paymentId) {
       return NextResponse.json(
-        { error: "Payment ID is required" },
+        { success: false, message: "Payment ID is required" },
         { status: 400 }
       );
     }
 
     if (!ObjectId.isValid(paymentId)) {
       return NextResponse.json(
-        { error: "Invalid payment ID format" },
+        { success: false, message: "Invalid payment ID format" },
         { status: 400 }
       );
     }
@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
 
     if (!payment) {
       return NextResponse.json(
-        { error: "Payment not found" },
+        { success: false, message: "Payment not found" },
         { status: 404 }
       );
     }
@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
 
     if (!user || !user.email) {
       return NextResponse.json(
-        { error: "User email not found" },
+        { success: false, message: "User email not found" },
         { status: 404 }
       );
     }
@@ -103,7 +103,8 @@ export async function POST(req: NextRequest) {
     console.error("❌ Error in registration confirmation webhook:", error);
     return NextResponse.json(
       {
-        error: "Failed to send registration confirmation email",
+        success: false,
+        message: "Failed to send registration confirmation email",
         details: error instanceof Error ? error.message : String(error)
       },
       { status: 500 }
