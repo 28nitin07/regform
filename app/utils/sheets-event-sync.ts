@@ -39,7 +39,7 @@ const SHEET_CONFIGS: Record<string, SheetConfig> = {
   },
   payments: {
     name: "Payments",
-    headers: ["Date", "Time", "Transaction ID", "Payment ID", "Payment Amount", "Account Holder Name", "University", "Sports", "Category", "Player Count", "Contact Number", "Email", "Payment Proof", "Verified?"]
+    headers: ["Date", "Time", "Transaction ID", "Payment ID", "Payment Amount", "Account Holder Name", "University", "Sports", "Category", "Player Count", "Contact Number", "Email", "Payment Proof", "Verified?", "Status"]
   }
 };
 
@@ -272,6 +272,7 @@ export async function syncPaymentSubmission(paymentId: string): Promise<SyncResu
       userPhone,
       userEmail,
       payment.paymentProof ? `${process.env.ROOT_URL || ""}/api/payments/proof/${payment.paymentProof}` : "",
+      "In Progress",
       "In Progress"
     ];
 
@@ -582,12 +583,68 @@ async function formatSheets(sheets: ReturnType<typeof google.sheets>, spreadshee
       });
     });
 
+    // 5. Add dropdown validation for "Verified?" and "Status" columns in Payments sheet
+    const paymentsSheetId = sheetIds[SHEET_CONFIGS.payments.name];
+    if (paymentsSheetId !== undefined) {
+      // Column N (index 13): "Verified?" dropdown
+      requests.push({
+        setDataValidation: {
+          range: {
+            sheetId: paymentsSheetId,
+            startRowIndex: 1, // Skip header
+            endRowIndex: 1000,
+            startColumnIndex: 13, // Column N (Verified?)
+            endColumnIndex: 14
+          },
+          rule: {
+            condition: {
+              type: 'ONE_OF_LIST',
+              values: [
+                { userEnteredValue: 'Yes' },
+                { userEnteredValue: 'No' },
+                { userEnteredValue: 'In Progress' },
+                { userEnteredValue: 'Not Started' }
+              ]
+            },
+            showCustomUi: true,
+            strict: true
+          }
+        }
+      });
+
+      // Column O (index 14): "Status" dropdown  
+      requests.push({
+        setDataValidation: {
+          range: {
+            sheetId: paymentsSheetId,
+            startRowIndex: 1, // Skip header
+            endRowIndex: 1000,
+            startColumnIndex: 14, // Column O (Status)
+            endColumnIndex: 15
+          },
+          rule: {
+            condition: {
+              type: 'ONE_OF_LIST',
+              values: [
+                { userEnteredValue: 'Yes' },
+                { userEnteredValue: 'No' },
+                { userEnteredValue: 'In Progress' },
+                { userEnteredValue: 'Not Started' }
+              ]
+            },
+            showCustomUi: true,
+            strict: true
+          }
+        }
+      });
+    }
+
     if (requests.length > 0) {
       await sheets.spreadsheets.batchUpdate({
         spreadsheetId,
         requestBody: { requests }
       });
-      console.log("[Sheets] ✅ All sheets formatted (headers, borders, colors)");
+      console.log("[Sheets] ✅ All sheets formatted (headers, borders, colors, dropdowns)");
     }
   } catch (error) {
     console.warn("[Sheets] Could not format sheets (non-critical):", error);
@@ -763,6 +820,7 @@ export async function initialFullSync(): Promise<InitialSyncResult> {
           owner ? String(owner.phone || "") : "",
           owner ? String(owner.email || "") : "",
           doc.paymentProof ? `${process.env.ROOT_URL || ""}api/payments/proof/${doc.paymentProof}` : "",
+          "In Progress",
           "In Progress"
         ];
       });

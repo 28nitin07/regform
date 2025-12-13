@@ -5,10 +5,10 @@ import { sendPaymentConfirmedEmail } from "@/app/utils/mailer/PaymentConfirmedEm
 
 /**
  * POST endpoint to handle payment verification webhook from Google Sheets
- * When "Verified?" column is changed to "Yes", this sends confirmation email
+ * When "Status" column is changed to "Yes", this sends confirmation email
  * 
  * Usage: POST /api/payments/verify
- * Body: { paymentId: string, status: "Yes" | "No" | "In Progress" }
+ * Body: { paymentId: string, status: "Yes" | "No" | "In Progress" | "Not Started" }
  */
 export async function POST(req: NextRequest) {
   try {
