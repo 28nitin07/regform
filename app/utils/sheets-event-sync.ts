@@ -669,7 +669,7 @@ async function formatSheets(sheets: ReturnType<typeof google.sheets>, spreadshee
         }
       });
 
-      // Column O (index 14): "Send Email?" dropdown  
+      // Column O (index 14): "Send Email?" dropdown
       requests.push({
         setDataValidation: {
           range: {
