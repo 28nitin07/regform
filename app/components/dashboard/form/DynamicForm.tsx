@@ -213,6 +213,8 @@ const RenderForm: React.FC<{ schema: ZodObject<ZodRawShape>, draftSchema: ZodObj
 
   
   async function onSubmit(data: z.infer<typeof formSchema>) {
+    console.log("🔵 onSubmit called, isSaveDraft:", isSaveDraft);
+    console.log("🔵 Form data:", data);
     try {
       if (isSaveDraft) {
         setIsSubmittingDraft(true);
@@ -250,6 +252,7 @@ const RenderForm: React.FC<{ schema: ZodObject<ZodRawShape>, draftSchema: ZodObj
           });
         }
       } else {
+        console.log("🟢 Entering SUBMIT mode (not draft)");
         setIsSubmitting(true);
         const { jsonData, fileData } = splitDataAndFiles(data);
 
@@ -263,10 +266,12 @@ const RenderForm: React.FC<{ schema: ZodObject<ZodRawShape>, draftSchema: ZodObj
           fd.append(key, file);
         });
 
+        console.log("🟢 Calling API /api/form/saveForm with FormData");
         const response = await post<{ success: boolean; error?: { message: string } }>(
           `/api/form/saveForm`,
           fd
         );
+        console.log("🟢 API Response:", response);
 
         // Handle response for form submission
         if (response.data?.success) {
