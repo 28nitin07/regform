@@ -359,6 +359,36 @@ async function findRowByIdInSheet(sheetName: string, id: string): Promise<number
 }
 
 /**
+ * Ensure headers exist in row 1 of the sheet
+ */
+async function ensureHeaders(sheets: ReturnType<typeof google.sheets>, spreadsheetId: string, sheetName: string, headers: string[]): Promise<void> {
+  try {
+    // Check if row 1 exists and has data
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: `${sheetName}!A1:ZZ1`,
+    });
+
+    const firstRow = response.data.values?.[0];
+    
+    // If row 1 is empty or doesn't match headers, write headers
+    if (!firstRow || firstRow.length === 0 || firstRow[0] !== headers[0]) {
+      await sheets.spreadsheets.values.update({
+        spreadsheetId,
+        range: `${sheetName}!A1`,
+        valueInputOption: 'RAW',
+        requestBody: {
+          values: [headers]
+        },
+      });
+      console.log(`[Sheets] ✅ Headers added to ${sheetName}`);
+    }
+  } catch (error) {
+    console.warn(`[Sheets] Could not ensure headers for ${sheetName}:`, error);
+  }
+}
+
+/**
  * Update existing row or append new row to sheet
  * Prevents duplicates by checking if ID exists in column A
  */
@@ -368,6 +398,12 @@ async function updateOrAppendToSheet(sheetName: string, id: string, row: string[
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       const { sheets, spreadsheetId } = createSheetsClient();
+
+      // Ensure headers exist before any operation
+      const config = Object.values(SHEET_CONFIGS).find(c => c.name === sheetName);
+      if (config) {
+        await ensureHeaders(sheets, spreadsheetId, sheetName, config.headers);
+      }
 
       // Check if row already exists
       const existingRowIndex = await findRowByIdInSheet(sheetName, id);
