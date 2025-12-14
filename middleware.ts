@@ -23,9 +23,9 @@ export async function middleware(req: NextRequest) {
   }
 
   // Validate the token
-  const isValid = await validateToken(token);
+  const validationResult = await validateToken(token);
 
-  if (isValid) {
+  if (validationResult.valid) {
     if (isSignInPage) {
       // Redirect authenticated users away from SignIn to Dashboard
       return NextResponse.redirect(new URL("/dashboard", req.url), { status: 302 });
@@ -34,25 +34,44 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // Redirect to SignIn if the token is invalid or expired
-  return NextResponse.redirect(new URL("/SignIn", req.url), { status: 302 });
+  // Redirect to SignIn with appropriate error message
+  const redirectUrl = new URL("/SignIn", req.url);
+  
+  if (validationResult.expired) {
+    redirectUrl.searchParams.set("error", "session_expired");
+    redirectUrl.searchParams.set("message", "Your session has expired. Please sign in again.");
+  } else {
+    redirectUrl.searchParams.set("error", "invalid_token");
+    redirectUrl.searchParams.set("message", "Invalid authentication. Please sign in again.");
+  }
+  
+  // Clear the invalid/expired token
+  const response = NextResponse.redirect(redirectUrl, { status: 302 });
+  response.cookies.delete("authToken");
+  
+  return response;
 }
 
 // Token validation function - validates directly without HTTP request
-async function validateToken(token: string): Promise<boolean> {
+async function validateToken(token: string): Promise<{ valid: boolean; expired: boolean }> {
   try {
     if (!JWT_SECRET) {
-      return false;
+      return { valid: false, expired: false };
     }
 
     // Decrypt and verify the token directly
     const decryptedToken = decrypt(token).jwt;
     jwt.verify(decryptedToken, JWT_SECRET as jwt.Secret);
     
-    return true;
+    return { valid: true, expired: false };
   } catch (error) {
-    // Token is invalid or expired
-    return false;
+    // Check if the error is specifically due to token expiration
+    if (error instanceof jwt.TokenExpiredError) {
+      return { valid: false, expired: true };
+    }
+    
+    // Token is invalid for other reasons (malformed, wrong signature, etc.)
+    return { valid: false, expired: false };
   }
 }
 

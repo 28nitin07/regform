@@ -6,6 +6,8 @@ import { fetchUserData } from "@/app/utils/GetUpdateUser";
 // unused imports removed
 import { sendPaymentConfirmationEmail } from "@/app/utils/mailer/PaymentEmail";
 import { syncPaymentSubmission } from "@/app/utils/sheets-event-sync";
+import { rateLimit, rateLimitPresets } from "@/app/utils/rateLimit";
+import { handleCors, addCorsHeaders } from "@/app/utils/cors";
 
 // (removed unused helper `addFileToStrapiDatabase`)
 
@@ -45,6 +47,20 @@ interface PaymentData {
 }
 
 export async function POST(req: NextRequest) {
+  const origin = req.headers.get("origin");
+  
+  // Handle CORS
+  const corsResult = handleCors(req);
+  if (corsResult) {
+    return corsResult;
+  }
+  
+  // Apply rate limiting - 20 payment submissions per minute per IP
+  const rateLimitResult = rateLimit(req, rateLimitPresets.formSubmit);
+  if (rateLimitResult) {
+    return addCorsHeaders(rateLimitResult, origin);
+  }
+
   try {
     const formData = await req.formData();
 

@@ -126,13 +126,14 @@ async function sendConfirmationEmail(formData: FormData) {
         .replace(/{{current_year}}/g, new Date().getFullYear().toString())
         .replace(/{{playerAndCoachDetails}}/g, coachTableRows + playerTableRows);
 
-    const attachments = [
-        {
-            filename: "BankDetails.pdf",
-            path: `${process.env.BANK_DETAILS_PDF}`,
-            contentType: 'application/pdf'
-        }
-    ];
+    // Bank details PDF attachment removed - no longer needed
+    // const attachments = [
+    //     {
+    //         filename: "BankDetails.pdf",
+    //         path: `${process.env.BANK_DETAILS_PDF}`,
+    //         contentType: 'application/pdf'
+    //     }
+    // ];
 
     // Send email to all participants
     await transporter.sendMail({
@@ -145,7 +146,7 @@ async function sendConfirmationEmail(formData: FormData) {
           "X-Gm-NoSave": "1",
       },
       html: emailContent,
-      attachments,
+      // attachments removed
   });
 
   console.log(`✅ Registration confirmation email sent to ${formData.email} for ${sports[formData.title]}`);

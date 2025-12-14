@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  # MongoDB for Local Development
+  mongodb-dev:
+    image: mongo:6.0
+    container_name: regform-mongodb-dev
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_DATABASE: production
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_dev_data:/data/db
+      - mongodb_dev_config:/data/configdb
+    networks:
+      - regform-dev-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh mongodb://localhost:27017/production --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mongodb_dev_data:
+    name: regform-mongodb-dev-data
+  mongodb_dev_config:
+    name: regform-mongodb-dev-config
+
+networks:
+  regform-dev-network:
+    name: regform-dev-network
+    driver: bridge

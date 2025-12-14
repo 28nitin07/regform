@@ -87,7 +87,7 @@ export async function POST(req: Request) {
     
     if (!user) {
       return new Response(
-        JSON.stringify({ error: "User not found" }),
+        JSON.stringify({ success: false, message: "User not found" }),
         { 
           status: 404,
           headers: { 'Content-Type': 'application/json' }
@@ -109,7 +109,7 @@ export async function POST(req: Request) {
 
     if (!verificationId) {
       return new Response(
-        JSON.stringify({ error: "VerificationId not found" }),
+        JSON.stringify({ success: false, message: "VerificationId not found" }),
         { 
           status: 404,
           headers: { 'Content-Type': 'application/json' }
@@ -128,7 +128,7 @@ export async function POST(req: Request) {
   } catch (error) {
     // console.error("Error sending email:", error);
     return new Response(
-      JSON.stringify({ error: "Failed to send email" }),
+      JSON.stringify({ success: false, message: "Failed to send email" }),
       { 
         status: 500,
         headers: { 'Content-Type': 'application/json' }
