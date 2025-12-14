@@ -844,7 +844,10 @@ const maxDate = new Date(2009, 1, 1); // On or before 1 Feb 2009
     <div className="flex justify-end gap-3 mt-6">
       <AlertDialogCancel
         className="px-4 py-2 border rounded-md"
-        onClick={() => setAgree(false)}
+        onClick={() => {
+          console.log("🔴 [DEBUG] Cancel clicked - First Dialog");
+          setAgree(false);
+        }}
       >
         Cancel
       </AlertDialogCancel>
@@ -852,8 +855,15 @@ const maxDate = new Date(2009, 1, 1); // On or before 1 Feb 2009
       <AlertDialogAction
         disabled={!agree || isSubmitting}
         onClick={() => {
+          console.log("🔴 [DEBUG] ===== FIRST DIALOG: Confirm & Submit clicked! =====");
+          console.log("🔴 [DEBUG] agree:", agree);
+          console.log("🔴 [DEBUG] isSubmitting:", isSubmitting);
+          console.log("🔴 [DEBUG] disabled:", !agree || isSubmitting);
+          console.log("🔴 [DEBUG] Setting isSaveDraft to false");
           setIsSaveDraft(false);
+          console.log("🔴 [DEBUG] Calling form.handleSubmit(onSubmit)");
           form.handleSubmit(onSubmit)();
+          console.log("🔴 [DEBUG] form.handleSubmit completed");
         }}
         className={!agree ? "opacity-50 pointer-events-none" : ""}
       >
@@ -926,7 +936,10 @@ const maxDate = new Date(2009, 1, 1); // On or before 1 Feb 2009
     <div className="flex justify-end gap-3 mt-6">
       <AlertDialogCancel
         className="px-4 py-2 border rounded-md"
-        onClick={() => setAgree(false)}
+        onClick={() => {
+          console.log("🔴 [DEBUG] Cancel clicked - Second Dialog");
+          setAgree(false);
+        }}
       >
         Cancel
       </AlertDialogCancel>
@@ -934,8 +947,26 @@ const maxDate = new Date(2009, 1, 1); // On or before 1 Feb 2009
       <AlertDialogAction
         disabled={!agree || isSubmitting}
         onClick={() => {
+          console.log("🔴 [DEBUG] ===== SECOND DIALOG: Confirm & Submit clicked! =====");
+          console.log("🔴 [DEBUG] agree:", agree);
+          console.log("🔴 [DEBUG] isSubmitting:", isSubmitting);
+          console.log("🔴 [DEBUG] disabled:", !agree || isSubmitting);
+          console.log("🔴 [DEBUG] Form validation errors:", form.formState.errors);
+          console.log("🔴 [DEBUG] Form is valid:", form.formState.isValid);
+          console.log("🔴 [DEBUG] Form values:", form.getValues());
+          console.log("🔴 [DEBUG] Setting isSaveDraft to false");
           setIsSaveDraft(false);
-          form.handleSubmit(onSubmit)();
+          console.log("🔴 [DEBUG] Calling form.handleSubmit(onSubmit)");
+          form.handleSubmit(
+            (data) => {
+              console.log("✅ [DEBUG] Validation passed! Calling onSubmit with data:", data);
+              onSubmit(data);
+            },
+            (errors) => {
+              console.error("❌ [DEBUG] Validation FAILED! Errors:", errors);
+            }
+          )();
+          console.log("🔴 [DEBUG] form.handleSubmit completed");
         }}
         className={!agree ? "opacity-50 pointer-events-none" : ""}
       >
