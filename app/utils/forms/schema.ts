@@ -74,22 +74,24 @@ export const playerFields = z.object({
         (phone) => /^[0-9]{10,15}$/.test(phone),
         { message: "Phone number must be atleast 10 digits" }
     ),
-    photo: z
-  .any()
-  .refine(
-    (file) =>
-      file &&
-      typeof file === "object" &&
-      ("type" in file ? ["image/jpeg", "image/png"].includes(file.type) : true),
-    { message: "Only JPEG or PNG images allowed" }
-  )
-  .refine(
-    (file) =>
-      file &&
-      typeof file === "object" &&
-      ("size" in file ? file.size <= 5 * 1024 * 1024 : true),
-    { message: "File must be smaller than 5MB" }
-  ),
+    // Photo field is no longer mandatory
+    photo: z.any().optional(),
+    // photo: z
+  // .any()
+  // .refine(
+  //   (file) =>
+  //     file &&
+  //     typeof file === "object" &&
+  //     ("type" in file ? ["image/jpeg", "image/png"].includes(file.type) : true),
+  //   { message: "Only JPEG or PNG images allowed" }
+  // )
+  // .refine(
+  //   (file) =>
+  //     file &&
+  //     typeof file === "object" &&
+  //     ("size" in file ? file.size <= 5 * 1024 * 1024 : true),
+  //   { message: "File must be smaller than 5MB" }
+  // ),
 
 });
 export const playerFieldsDraft = z.object({
