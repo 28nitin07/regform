@@ -32,12 +32,22 @@ A: Once a form is submitted, it cannot be edited. Please review all information 
 ### Q: What should I do if I want to register again after payment?
 A: Make sure to complete the registration before making the final payment. If you have made the payment with a given account, you cannot login with the same account. Make an account with a different email ID, then register and make payments.
 
+## Payments
 
-### Q: What photo specifications are required?
-A: Please refer to the sport-specific guidelines for photo requirements. Generally:
-- Clear front-facing photo
-- Proper lighting
-- Professional attire as per sport guidelines
+### Q: When should I make the payment?
+A: Complete your registration form first, then proceed to the Payments section to finalize your participation.
+
+### Q: What payment methods are accepted?
+A: Payment methods available will be displayed during the payment process. Common methods typically include:
+- Credit/Debit Cards
+- Digital Wallets
+- Bank Transfers
+
+### Q: Is my payment secure?
+A: Yes, all payments are processed through secure payment gateways with encryption to protect your financial information.
+
+### Q: Can I get a refund if I cancel my registration?
+A: Refund policies are set by the event organizers. Please contact the support team for specific refund information and cancellation procedures.
 
 ## Sport-Specific Guidelines
 
@@ -85,23 +95,6 @@ A: The registration platform works best with modern browsers including:
 - Firefox (latest version)
 - Safari (latest version)
 - Edge (latest version)
-
-## Payments
-
-### Q: When should I make the payment?
-A: Complete your registration form first, then proceed to the Payments section to finalize your participation.
-
-### Q: What payment methods are accepted?
-A: Payment methods available will be displayed during the payment process. Common methods typically include:
-- Credit/Debit Cards
-- Digital Wallets
-- Bank Transfers
-
-### Q: Is my payment secure?
-A: Yes, all payments are processed through secure payment gateways with encryption to protect your financial information.
-
-### Q: Can I get a refund if I cancel my registration?
-A: Refund policies are set by the event organizers. Please contact the support team for specific refund information and cancellation procedures.
 
 ## Support
 
