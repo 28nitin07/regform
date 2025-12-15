@@ -23,7 +23,6 @@ A: You will need to provide:
 - Educational institution details 
 - Sport-specific information (as required by the sport)
 
-
 ### Q: Can I save my form as a draft?
 A: Yes, you can save your form as a draft before final submission. You can return to and complete it later by logging in with your credentials.
 
@@ -47,6 +46,21 @@ A: Each sport form has a "View Sports Guidelines" button that provides detailed 
 
 ### Q: What should I do if I don't meet the eligibility criteria?
 A: If you don't meet the eligibility criteria for a sport, unfortunately, you cannot register for that sport. Please check the guidelines carefully before starting the registration form.
+
+## Travel and Hospitality
+
+### Q: Accommodation
+A: Ashoka University won’t be providing accommodations to Athletes. However, please find a list of recommended hotels near the Ashoka campus. Ashoka University or Agneepath shall not be responsible for any delays or cancellations by the hotels. Kindly book your stay by yourself in advance. 
+
+https://docs.google.com/spreadsheets/d/1g4IkiOpeFkf-dH0b8FSKZ1uDoicRNHV5rVANyc8ZyYY/edit?gid=1837285371#gid=1837285371 
+
+### Q: Travel
+A: Ashoka Shuttles will run to & from Azadpur Metro station and the recommended Hotels. The transport schedule will be shared closer to the date of Agneepath and shall depend on the match schedule. 
+
+### Q: Food and Refreshments 
+A: Participants can purchase food & snacks from the university’s mess by buying food coupons, or can directly access the third-party food outlets/vendors on campus. 
+
+
 
 ## Technical Issues
 
