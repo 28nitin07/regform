@@ -60,6 +60,13 @@ A: Ashoka Shuttles will run to & from Azadpur Metro station and the recommended 
 ### Q: Food and Refreshments 
 A: Participants can purchase food & snacks from the university’s mess by buying food coupons, or can directly access the third-party food outlets/vendors on campus. 
 
+## Matches & Fixtures:
+
+### Q: What are the tentative match timings?
+A: The matches will happen between 8AM and 8PM (possibility for delays in some cases and sports)
+
+### Q: When can I get to know the match schedule?
+A: The exact schedule will be released closer to the day of the match.
 
 
 ## Technical Issues
