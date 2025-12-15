@@ -53,12 +53,10 @@ A: If you don't meet the eligibility criteria for a sport, unfortunately, you ca
 ### Q: What should I do if I encounter an error while submitting my form?
 A: Try the following steps:
 1. Refresh the page and try again
-2. Clear your browser cache and cookies
-3. Try using a different browser
-4. If the issue persists, contact support with details of the error
-
-### Q: Is there a file size limit for photo uploads?
-A: Yes, photo files should be reasonably sized (typically under 5MB). If your file is too large, try compressing it using an image compression tool.
+2. Logout and re-enter details
+3. Clear your browser cache and cookies
+4. Try using a different browser
+5. If the issue persists, contact the relevant POC in the team for support
 
 ### Q: What browsers are supported?
 A: The registration platform works best with modern browsers including:
