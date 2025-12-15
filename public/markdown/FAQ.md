@@ -1,39 +1,37 @@
 # Frequently Asked Questions (FAQ)
 
-## Registration
+## General
 
 ### Q: What is the age requirement for registration?
-A: Participants must be between 17 and 25 years old as of February 1, 2026. This means:
-- Minimum birthdate: February 2, 2001
-- Maximum birthdate: February 1, 2009
+A: Participants must be between 17 and 25 years old as of February 1, 2026. 
 
 ### Q: When is the registration deadline?
-A: Check the official event website for the current registration deadline. Early registration is recommended as slots may be limited.
+A: First week of January. Early registration is recommended as slots may be limited.
 
 ### Q: Can I register for multiple sports?
-A: Yes, you can register for multiple sports. Simply complete the registration form for each sport you wish to participate in. Then proceed to Payments.
+A: No, you can only register for 1 sport. Complete the registration form for the sport you wish to participate in, then proceed to Payments.
 
 ### Q: Is there a registration fee?
-A: Yes, there is a registration fee. You will be able to view and pay the fee during the payment section after completing your registration form.
+A: Yes, there is a registration fee of Rs. 800 per person. You will be able to view the total amount and pay the fee in the payment section after completing your registration form.    
 
 ## Form Submission
 
 ### Q: What information do I need to provide in the registration form?
 A: You will need to provide:
-- Personal details (name, date of birth, contact information)
-- Educational institution details
-- Sport-specific information as required by the sport
-- Emergency contact information
-- Photo (as per specifications)
+- Personal details of the Coach (optional - name, gender, contact information) 
+- Personal details of the Participants (name, D.O.B, contact information)
+- Educational institution details 
+- Sport-specific information (as required by the sport)
+
 
 ### Q: Can I save my form as a draft?
-A: Yes, you can save your form as a draft before final submission. You can return and complete it later by logging in with your credentials.
+A: Yes, you can save your form as a draft before final submission. You can return to and complete it later by logging in with your credentials.
 
 ### Q: Can I edit my form after submission?
 A: Once a form is submitted, it cannot be edited. Please review all information carefully before clicking the submit button.
 
 ### Q: What should I do if I want to register again after payment?
-A: Register in all the sports before making the final payment. If yo have made the payment with a given account, you cannot login with the same account. Make an account with a different email ID, then register and make payments.
+A: Make sure to complete the registration before making the final payment. If you have made the payment with a given account, you cannot login with the same account. Make an account with a different email ID, then register and make payments.
 
 
 ### Q: What photo specifications are required?
