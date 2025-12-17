@@ -118,9 +118,7 @@ const getAuthToken = (): string | null => {
   const [, setHasAnyForm] = useState<boolean>(false)
   const [, setHasSubmitted] = useState<boolean>(false)
   
-  const [faqOpen, setFaqOpen] = useState(false)
-  const [faqContent, setFaqContent] = useState<string>("")
-
+  
   const handleLogout = () => {
     const isProduction = typeof window !== 'undefined' && window.location.protocol === 'https:';
     document.cookie = `authToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; ${isProduction ? 'Secure; ' : ''}SameSite=Lax`;
@@ -196,32 +194,7 @@ const getAuthToken = (): string | null => {
       return () => window.removeEventListener("user:updated", onUserUpdated);
     }, [])
 
-  // Fetch FAQ content when modal opens
-  useEffect(() => {
-    if (faqOpen && !faqContent) {
-      const fetchFAQ = async () => {
-        try {
-          const response = await fetch("/markdown/FAQ.md");
-          if (response.ok) {
-            const text = await response.text();
-            setFaqContent(text);
-          }
-        } catch (error) {
-          console.error("Error fetching FAQ:", error);
-        }
-      };
-      fetchFAQ();
-    }
-  }, [faqOpen, faqContent]);
-
-  // ESC close for FAQ
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setFaqOpen(false);
-    };
-    if (faqOpen) window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, [faqOpen]);
+  
 
     useEffect(() => {
       // derive items so we can toggle disabled based on fetched user flags
@@ -347,16 +320,18 @@ const getAuthToken = (): string | null => {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton onClick={() => setFaqOpen(true)} className="flex space-x-2 text-lg">
-                  <HelpCircle className="h-5 w-5" />
-                  <span>FAQ</span>
-                </SidebarMenuButton>
+                <Link href="/dashboard/faq">
+                <SidebarMenuButton className="flex space-x-2 text-lg">
+                <HelpCircle className="h-5 w-5" />
+                <span>FAQ</span>
+                 </SidebarMenuButton>
+                   </Link>
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter className="mt-auto p-4">
+       <SidebarFooter className="mt-auto p-4">
         <SidebarMenuItem>
           <SidebarMenuButton
             onClick={handleLogout}
@@ -368,57 +343,8 @@ const getAuthToken = (): string | null => {
         </SidebarMenuItem>
       </SidebarFooter>
 
-      {/* FAQ Modal */}
-      <AnimatePresence>
-        {faqOpen && (
-          <>
-            {/* Backdrop */}
-            <motion.div
-              className="fixed inset-0 bg-black/50 z-40"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setFaqOpen(false)}
-            />
-
-            {/* Modal */}
-            <motion.div
-              className="fixed inset-0 z-50 flex items-center justify-center p-4"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
-              <motion.div
-                className="w-full max-w-3xl bg-white rounded-lg shadow-lg max-h-[85vh] overflow-y-auto"
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.95, opacity: 0 }}
-              >
-                <div className="p-6">
-                  <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-2xl font-bold">Frequently Asked Questions</h2>
-                    <button
-                      onClick={() => setFaqOpen(false)}
-                      className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
-                    >
-                      ×
-                    </button>
-                  </div>
-                  <div className="prose prose-sm max-w-none">
-                    <ReactMarkdown
-                      remarkPlugins={[remarkGfm]}
-                      components={MarkdownComponents}
-                    >
-                      {faqContent}
-                    </ReactMarkdown>
-                  </div>
-                </div>
-              </motion.div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-      </>}
-    </Sidebar>
-  );
+    </>
+    }
+  </Sidebar>
+);
 }

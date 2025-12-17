@@ -66,6 +66,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@tailwindcss/typography": "^0.5.19",
     "@types/bcrypt": "^5.0.2",
     "@types/formidable": "^3.4.5",
     "@types/jsonwebtoken": "^9.0.7",
