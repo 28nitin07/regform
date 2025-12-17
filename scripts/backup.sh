@@ -13,6 +13,13 @@ set -e  # Exit on error
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 
+# Load environment variables from .env.production if it exists
+if [ -f "$PROJECT_DIR/.env.production" ]; then
+    set -a  # Automatically export all variables
+    source "$PROJECT_DIR/.env.production"
+    set +a
+fi
+
 # Paths - work with both production and local
 BACKUP_DIR="${BACKUP_DIR:-$HOME/backups/regform}"
 MONGODB_URI="${MONGODB_URI:-mongodb://127.0.0.1:27017}"
@@ -223,10 +230,24 @@ log "📊 Local backups retained: $MONGO_COUNT MongoDB, $UPLOADS_COUNT uploads"
 # ============================================
 
 if command -v rclone &> /dev/null; then
-    log "🧹 Cleaning up old Google Drive backups (keeping only 2 most recent)"
+    log "🧹 Cleaning up old Google Drive backups (keeping only 2 most recent daily folders)"
     
-    # Function to keep only N most recent files in rclone remote
-    cleanup_gdrive_folder() {
+    # Function to keep only N most recent daily folders in rclone remote
+    cleanup_gdrive_daily_folders() {
+        local base_path="$1"
+        local keep_count=2
+        
+        # List directories (daily folders), sort by name (date format YYYY-MM-DD), keep only recent
+        rclone lsf "$base_path" --dirs-only 2>/dev/null | sort -r | tail -n +$((keep_count + 1)) | while read folder; do
+            if [ -n "$folder" ]; then
+                log "🗑️  Deleting old folder: $base_path/$folder"
+                rclone purge "$base_path/$folder" 2>/dev/null || true
+            fi
+        done
+    }
+    
+    # Function to keep only N most recent files in a flat folder (for config backups)
+    cleanup_gdrive_files() {
         local remote_path="$1"
         local keep_count=2
         
@@ -234,15 +255,18 @@ if command -v rclone &> /dev/null; then
         rclone lsf "$remote_path" --format "tp" 2>/dev/null | sort -rn | tail -n +$((keep_count + 1)) | while read line; do
             filename=$(echo "$line" | cut -f2-)
             if [ -n "$filename" ]; then
+                log "🗑️  Deleting old file: $remote_path/$filename"
                 rclone delete "$remote_path/$filename" 2>/dev/null || true
             fi
         done
     }
     
-    # Clean each backup type
-    cleanup_gdrive_folder "$GDRIVE_REMOTE/mongodb/$DATE_DIR"
-    cleanup_gdrive_folder "$GDRIVE_REMOTE/uploads/$DATE_DIR"
-    cleanup_gdrive_folder "$GDRIVE_REMOTE/config"
+    # Clean daily folders for MongoDB and uploads (keep only 2 most recent days)
+    cleanup_gdrive_daily_folders "$GDRIVE_REMOTE/mongodb"
+    cleanup_gdrive_daily_folders "$GDRIVE_REMOTE/uploads"
+    
+    # Clean flat config folder (keep only 2 most recent files)
+    cleanup_gdrive_files "$GDRIVE_REMOTE/config"
     
     log "✅ Google Drive cleanup completed"
 fi
