@@ -8,10 +8,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { post } from "@/app/utils/PostGetData"
 import { usePathname } from "next/navigation";
-import ReactMarkdown from "react-markdown";
-import type { Components } from "react-markdown";
-import remarkGfm from "remark-gfm";
-import { motion, AnimatePresence } from "framer-motion";
+
+
 
 import {
   Sidebar,
@@ -26,57 +24,7 @@ import {
   SidebarFooter,
 } from "@/components/ui/sidebar";
 
-const MarkdownComponents: Components = {
-  table: ({ children }) => (
-    <table className="min-w-full divide-y divide-gray-200 my-4 border">
-      {children}
-    </table>
-  ),
-  thead: ({ children }) => <thead className="bg-gray-50">{children}</thead>,
-  tbody: ({ children }) => (
-    <tbody className="bg-white divide-y divide-gray-200">{children}</tbody>
-  ),
-  tr: ({ children }) => <tr className="hover:bg-gray-50">{children}</tr>,
-  td: ({ children }) => (
-    <td className="px-6 py-4 whitespace-normal border-r last:border-r-0">
-      {children}
-    </td>
-  ),
-  th: ({ children }) => (
-    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r last:border-r-0">
-      {children}
-    </th>
-  ),
-  ol: ({ children }) => (
-    <ol className="list-decimal list-outside space-y-2 my-4 ml-4">
-      {children}
-    </ol>
-  ),
-  ul: ({ children }) => (
-    <ul className="list-disc list-outside space-y-2 my-4 ml-4">
-      {children}
-    </ul>
-  ),
-  li: ({ children }) => <li className="pl-2">{children}</li>,
-  p: ({ children }) => <p className="my-4">{children}</p>,
-  h1: ({ children }) => (
-    <h1 className="text-2xl font-bold my-4 hidden">{children}</h1>
-  ),
-  h2: ({ children }) => (
-    <h2 className="text-xl font-bold my-3">{children}</h2>
-  ),
-  h3: ({ children }) => (
-    <h3 className="text-lg font-bold my-2">{children}</h3>
-  ),
-  pre: ({ children }) => (
-    <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto my-4">
-      {children}
-    </pre>
-  ),
-  code: ({ children }) => (
-    <code className="bg-gray-100 px-1 rounded">{children}</code>
-  ),
-};
+ 
 
 type MenuItem = {
   title: string;

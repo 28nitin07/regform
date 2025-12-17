@@ -61,7 +61,9 @@ A: If you don't meet the eligibility criteria for a sport, unfortunately, you ca
 ### Q: Accommodation
 A: Ashoka University won’t be providing accommodations to Athletes. However, please find a list of recommended hotels near the Ashoka campus. Ashoka University or Agneepath shall not be responsible for any delays or cancellations by the hotels. Kindly book your stay by yourself in advance. 
 
-https://docs.google.com/spreadsheets/d/1g4IkiOpeFkf-dH0b8FSKZ1uDoicRNHV5rVANyc8ZyYY/edit?gid=1837285371#gid=1837285371 
+[Link to accommodation database](https://docs.google.com/spreadsheets/d/1g4IkiOpeFkf-dH0b8FSKZ1uDoicRNHV5rVANyc8ZyYY/edit?gid=1837285371#gid=1837285371)
+
+
 
 ### Q: Travel
 A: Ashoka Shuttles will run to & from Azadpur Metro station and the recommended Hotels. The transport schedule will be shared closer to the date of Agneepath and shall depend on the match schedule. 
@@ -100,9 +102,17 @@ A: The registration platform works best with modern browsers including:
 A: If you have questions/additions/deletions/modifications in registration or encounter issues not covered in this FAQ:
 1. Check the sport-specific guidelines to address them
 2. Try refreshing or using a different browser if guidelines are missing.
-3. Contact the official event support team through the email: agneepath@ashoka.edu.in or contact - Antara Malhotra (+91 97173 67728)
+3. Contact the official event support team through the email: agneepath@ashoka.edu.in   (OR)
+
+   **Contact:**   **Antara Malhotra**: **+91 97173 67728**
+
+
+
+
+
 
 ### Q: What should I include when contacting support?
+
 A: When reaching out to support, please include:
 - Your registration/participant ID (if available)
 - Description of the issue
