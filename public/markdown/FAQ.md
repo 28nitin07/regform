@@ -71,7 +71,7 @@ A: Ashoka Shuttles will run to & from Azadpur Metro station and the recommended 
 ### Q: Food and Refreshments 
 A: Participants can purchase food & snacks from the university’s mess by buying food coupons, or can directly access the third-party food outlets/vendors on campus. 
 
-## Matches & Fixtures:
+## Matches & Fixtures
 
 ### Q: What are the tentative match timings?
 A: The matches will happen between 8AM and 8PM (possibility for delays in some cases and sports)
@@ -82,7 +82,7 @@ A: The exact schedule will be released closer to the day of the match.
 ## Technical Issues
 
 ### Q: What should I do if I encounter an error while submitting my form?
-A: Try the following steps:
+Try the following steps:
 1. Refresh the page and try again
 2. Logout and re-enter details
 3. Clear your browser cache and cookies
@@ -90,7 +90,7 @@ A: Try the following steps:
 5. If the issue persists, contact the relevant POC in the team for support
 
 ### Q: What browsers are supported?
-A: The registration platform works best with modern browsers including:
+The registration platform works best with modern browsers including:
 - Chrome (latest version)
 - Firefox (latest version)
 - Safari (latest version)
