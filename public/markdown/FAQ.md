@@ -61,7 +61,9 @@ A: If you don't meet the eligibility criteria for a sport, unfortunately, you ca
 ### Q: Accommodation
 A: Ashoka University won’t be providing accommodations to Athletes. However, please find a list of recommended hotels near the Ashoka campus. Ashoka University or Agneepath shall not be responsible for any delays or cancellations by the hotels. Kindly book your stay by yourself in advance. 
 
-https://docs.google.com/spreadsheets/d/1g4IkiOpeFkf-dH0b8FSKZ1uDoicRNHV5rVANyc8ZyYY/edit?gid=1837285371#gid=1837285371 
+[Link to accommodation database](https://docs.google.com/spreadsheets/d/1g4IkiOpeFkf-dH0b8FSKZ1uDoicRNHV5rVANyc8ZyYY/edit?gid=1837285371#gid=1837285371)
+
+
 
 ### Q: Travel
 A: Ashoka Shuttles will run to & from Azadpur Metro station and the recommended Hotels. The transport schedule will be shared closer to the date of Agneepath and shall depend on the match schedule. 
@@ -69,7 +71,7 @@ A: Ashoka Shuttles will run to & from Azadpur Metro station and the recommended 
 ### Q: Food and Refreshments 
 A: Participants can purchase food & snacks from the university’s mess by buying food coupons, or can directly access the third-party food outlets/vendors on campus. 
 
-## Matches & Fixtures:
+## Matches & Fixtures
 
 ### Q: What are the tentative match timings?
 A: The matches will happen between 8AM and 8PM (possibility for delays in some cases and sports)
@@ -80,7 +82,7 @@ A: The exact schedule will be released closer to the day of the match.
 ## Technical Issues
 
 ### Q: What should I do if I encounter an error while submitting my form?
-A: Try the following steps:
+Try the following steps:
 1. Refresh the page and try again
 2. Logout and re-enter details
 3. Clear your browser cache and cookies
@@ -88,7 +90,7 @@ A: Try the following steps:
 5. If the issue persists, contact the relevant POC in the team for support
 
 ### Q: What browsers are supported?
-A: The registration platform works best with modern browsers including:
+The registration platform works best with modern browsers including:
 - Chrome (latest version)
 - Firefox (latest version)
 - Safari (latest version)
@@ -100,9 +102,17 @@ A: The registration platform works best with modern browsers including:
 A: If you have questions/additions/deletions/modifications in registration or encounter issues not covered in this FAQ:
 1. Check the sport-specific guidelines to address them
 2. Try refreshing or using a different browser if guidelines are missing.
-3. Contact the official event support team through the email: agneepath@ashoka.edu.in or contact - Antara Malhotra (+91 97173 67728)
+3. Contact the official event support team through the email: agneepath@ashoka.edu.in   (OR)
+
+   **Contact:**   **Antara Malhotra**: **+91 97173 67728**
+
+
+
+
+
 
 ### Q: What should I include when contacting support?
+
 A: When reaching out to support, please include:
 - Your registration/participant ID (if available)
 - Description of the issue
