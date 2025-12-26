@@ -6,11 +6,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 export default function AdminLoginPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-4 transition-colors">
+      <Card className="w-full max-w-md dark:bg-gray-800 dark:border-gray-700">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">Admin Portal</CardTitle>
-          <CardDescription className="text-center">
+          <CardTitle className="text-2xl font-bold text-center dark:text-white">Admin Portal</CardTitle>
+          <CardDescription className="text-center dark:text-gray-400">
             Sign in with your authorized Google account to access the admin panel
           </CardDescription>
         </CardHeader>
@@ -40,7 +40,7 @@ export default function AdminLoginPage() {
             </svg>
             Sign in with Google
           </Button>
-          <p className="text-sm text-gray-500 text-center mt-4">
+          <p className="text-sm text-gray-500 dark:text-gray-400 text-center mt-4">
             Only authorized administrators can access this portal
           </p>
         </CardContent>

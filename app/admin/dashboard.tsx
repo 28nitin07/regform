@@ -22,7 +22,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import EditUserDialog from "./edit-user-dialog";
 import EditFormDialog from "./edit-form-dialog";
-import { LogOut, Users, FileText, RefreshCw } from "lucide-react";
+import { LogOut, Users, FileText, RefreshCw, Moon, Sun } from "lucide-react";
+import { useTheme } from "./theme-provider";
 
 interface User {
   _id: string;
@@ -53,6 +54,7 @@ interface Form {
 
 export default function AdminDashboard() {
   const { data: session } = useSession();
+  const { theme, toggleTheme } = useTheme();
   const [users, setUsers] = useState<User[]>([]);
   const [forms, setForms] = useState<Form[]>([]);
   const [loading, setLoading] = useState(true);
@@ -96,80 +98,93 @@ export default function AdminDashboard() {
     submittedForms: forms.filter((f) => f.status === "submitted").length,
   };
 
-  return (
-    <div className="min-h-screen bg-gray-50">
+  return ( dark:bg-gray-900 transition-colors">
       {/* Header */}
-      <header className="bg-white border-b">
+      <header className="bg-white dark:bg-gray-800 border-b dark:border-gray-700 transition-colors">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                 Admin Portal
               </h1>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
                 Agneepath Registration Management
               </p>
             </div>
             <div className="flex items-center gap-4">
               <div className="text-right">
-                <p className="text-sm font-medium text-gray-900">
+                <p className="text-sm font-medium text-gray-900 dark:text-white">
                   {session?.user?.name}
                 </p>
-                <p className="text-xs text-gray-500">{session?.user?.email}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{session?.user?.email}</p>
               </div>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => signOut({ callbackUrl: "/admin/login" })}
+                onClick={toggleTheme}
+                className="dark:border-gray-600"
               >
-                <LogOut className="h-4 w-4 mr-2" />
-                Sign Out
+                {theme === "light" ? (
+                  <Moon className="h-4 w-4" />
+                ) : (
+                  <Sun className="h-4 w-4" />
+                )}
               </Button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
-          <Card>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => signOut({ callbackUrl: "/admin/login" })}
+                className="dark:border-gray-600"
+                className="dark:bg-gray-800 dark:border-gray-700">
             <CardHeader className="pb-2">
-              <CardDescription>Total Users</CardDescription>
+              <CardDescription className="dark:text-gray-400">Total Users</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.totalUsers}</div>
+              <div className="text-2xl font-bold dark:text-white">{stats.totalUsers}</div>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="dark:bg-gray-800 dark:border-gray-700">
             <CardHeader className="pb-2">
-              <CardDescription>Verified</CardDescription>
+              <CardDescription className="dark:text-gray-400">Verified</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.verifiedUsers}</div>
+              <div className="text-2xl font-bold dark:text-white">{stats.verifiedUsers}</div>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="dark:bg-gray-800 dark:border-gray-700">
             <CardHeader className="pb-2">
-              <CardDescription>Registered</CardDescription>
+              <CardDescription className="dark:text-gray-400">Registered</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
+              <div className="text-2xl font-bold dark:text-white">
                 {stats.completedRegistrations}
               </div>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="dark:bg-gray-800 dark:border-gray-700">
             <CardHeader className="pb-2">
-              <CardDescription>Paid</CardDescription>
+              <CardDescription className="dark:text-gray-400">Paid</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
+              <div className="text-2xl font-bold dark:text-white">
                 {stats.completedPayments}
               </div>
             </CardContent>
           </Card>
+          <Card className="dark:bg-gray-800 dark:border-gray-700">
+            <CardHeader className="pb-2">
+              <CardDescription className="dark:text-gray-400">Total Forms</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold dark:text-white">{stats.totalForms}</div>
+            </CardContent>
+          </Card>
+          <Card className="dark:bg-gray-800 dark:border-gray-700">
+            <CardHeader className="pb-2">
+              <CardDescription className="dark:text-gray-400">Submitted</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold dark:text-white
           <Card>
             <CardHeader className="pb-2">
               <CardDescription>Total Forms</CardDescription>
@@ -196,17 +211,17 @@ export default function AdminDashboard() {
                 <Users className="h-4 w-4 mr-2" />
                 Users
               </TabsTrigger>
-              <TabsTrigger value="forms">
-                <FileText className="h-4 w-4 mr-2" />
-                Forms
-              </TabsTrigger>
-            </TabsList>
-            <Button onClick={fetchData} variant="outline" size="sm">
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Refresh
-            </Button>
-          </div>
-
+              <Ta className="dark:bg-gray-800 dark:border-gray-700">
+              <CardHeader>
+                <CardTitle className="dark:text-white">Registered Users</CardTitle>
+                <CardDescription className="dark:text-gray-400">
+                  Manage all user registrations
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <div className="flex justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-white
           {/* Users Tab */}
           <TabsContent value="users">
             <Card>
@@ -282,17 +297,17 @@ export default function AdminDashboard() {
                               >
                                 Edit
                               </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
+                  className="dark:bg-gray-800 dark:border-gray-700">
+              <CardHeader>
+                <CardTitle className="dark:text-white">Registration Forms</CardTitle>
+                <CardDescription className="dark:text-gray-400">
+                  Manage all submitted forms
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <div className="flex justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-white
           {/* Forms Tab */}
           <TabsContent value="forms">
             <Card>
