@@ -396,7 +396,7 @@ export default function EditUserSimpleDialog({ user, onClose, onUpdate }: Props)
                           <Input
                             placeholder="DOB"
                             type="date"
-                            value={newPlayer.date}
+                            value={typeof newPlayer.date === 'string' ? newPlayer.date : newPlayer.date?.toISOString().split('T')[0] || ''}
                             onChange={(e) => setNewPlayer({ ...newPlayer, date: e.target.value })}
                             className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                           />
