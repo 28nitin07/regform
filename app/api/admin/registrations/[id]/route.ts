@@ -62,6 +62,7 @@ export async function PATCH(
       "emailVerified",
       "registrationDone",
       "paymentDone",
+      "submittedForms",
     ];
 
     for (const field of allowedFields) {
@@ -78,6 +79,59 @@ export async function PATCH(
 
     if (!result) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    // Update corresponding forms collection if submittedForms changed
+    if (body.submittedForms) {
+      const formsCollection = db.collection("form");
+      const userId = new ObjectId(id);
+
+      // Update or create form documents for each sport
+      for (const [sportKey, sportData] of Object.entries(body.submittedForms as Record<string, any>)) {
+        const formData = {
+          ownerId: userId,
+          title: sportData.title || sportKey,
+          status: sportData.status || "draft",
+          fields: sportData.fields || {},
+          updatedAt: new Date(),
+        };
+
+        // Try to find existing form for this user and sport
+        const existingForm = await formsCollection.findOne({
+          ownerId: userId,
+          title: formData.title,
+        });
+
+        if (existingForm) {
+          // Update existing form
+          await formsCollection.updateOne(
+            { _id: existingForm._id },
+            { $set: formData }
+          );
+        } else {
+          // Create new form
+          await formsCollection.insertOne({
+            ...formData,
+            createdAt: new Date(),
+          });
+        }
+      }
+    }
+
+    // Trigger Google Sheets sync (non-blocking)
+    try {
+      // Don't await - let it run in background
+      fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/sync/event`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          type: "user_updated",
+          userId: id,
+        }),
+      }).catch(err => console.error("Background sync failed:", err));
+    } catch (error) {
+      console.error("Error triggering sync:", error);
+      // Don't fail the request if sync fails
     }
 
     return NextResponse.json({ success: true, data: result });

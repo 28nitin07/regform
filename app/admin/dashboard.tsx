@@ -21,7 +21,9 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import EditUserDialog from "./edit-user-dialog";
+import EditUserAdvancedDialog from "./edit-user-advanced-dialog";
 import EditFormDialog from "./edit-form-dialog";
+import EditFormAdvancedDialog from "./edit-form-advanced-dialog";
 import { LogOut, Users, FileText, RefreshCw, Moon, Sun } from "lucide-react";
 import { useTheme } from "./theme-provider";
 
@@ -60,6 +62,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [selectedForm, setSelectedForm] = useState<Form | null>(null);
+  const [advancedMode, setAdvancedMode] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
@@ -231,10 +234,21 @@ export default function AdminDashboard() {
           <TabsContent value="users">
             <Card className="dark:bg-gray-800 dark:border-gray-700">
               <CardHeader>
-                <CardTitle className="dark:text-white">Registered Users</CardTitle>
-                <CardDescription className="dark:text-gray-400">
-                  Manage all user registrations
-                </CardDescription>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="dark:text-white">Registered Users</CardTitle>
+                    <CardDescription className="dark:text-gray-400">
+                      Manage all user registrations
+                    </CardDescription>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Label className="text-sm dark:text-gray-300">Advanced Mode</Label>
+                    <Switch
+                      checked={advancedMode}
+                      onCheckedChange={setAdvancedMode}
+                    />
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
                 {loading ? (
@@ -318,10 +332,21 @@ export default function AdminDashboard() {
           <TabsContent value="forms">
             <Card className="dark:bg-gray-800 dark:border-gray-700">
               <CardHeader>
-                <CardTitle className="dark:text-white">Registration Forms</CardTitle>
-                <CardDescription className="dark:text-gray-400">
-                  Manage all submitted forms
-                </CardDescription>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="dark:text-white">Registration Forms</CardTitle>
+                    <CardDescription className="dark:text-gray-400">
+                      Manage all submitted forms
+                    </CardDescription>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Label className="text-sm dark:text-gray-300">Advanced Mode</Label>
+                    <Switch
+                      checked={advancedMode}
+                      onCheckedChange={setAdvancedMode}
+                    />
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
                 {loading ? (
@@ -391,8 +416,7 @@ export default function AdminDashboard() {
         </Tabs>
       </main>
 
-      {/* Edit Dialogs */}
-      {selectedUser && (
+      {/* Edit Dialogs !advancedMode && (
         <EditUserDialog
           user={selectedUser}
           onClose={() => setSelectedUser(null)}
@@ -403,8 +427,31 @@ export default function AdminDashboard() {
         />
       )}
 
-      {selectedForm && (
+      {selectedUser && advancedMode && (
+        <EditUserAdvanceder && (
+        <EditUserDialog
+          user={selectedUser}
+          onClose={() => setSelectedUser(null)}
+          onUpdate={() => {
+            setSelectedUser(null);
+            fetchData();
+          }}
+        />
+      )}
+
+      {selectedForm && !advancedMode && (
         <EditFormDialog
+          form={selectedForm}
+          onClose={() => setSelectedForm(null)}
+          onUpdate={() => {
+            setSelectedForm(null);
+            fetchData();
+          }}
+        />
+      )}
+
+      {selectedForm && advancedMode && (
+        <EditFormAdvancedDialog
           form={selectedForm}
           onClose={() => setSelectedForm(null)}
           onUpdate={() => {
