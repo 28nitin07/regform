@@ -84,14 +84,14 @@ export default function EditFormDialog({ form, onClose, onUpdate }: Props) {
       if (key === "playerFields" && Array.isArray(value)) {
         return (
           <div key={key} className="space-y-2">
-            <h4 className="font-semibold text-sm">Players ({value.length})</h4>
+            <h4 className="font-semibold text-sm dark:text-gray-300">Players ({value.length})</h4>
             {value.map((player, idx) => (
-              <div key={idx} className="ml-4 p-3 bg-gray-50 rounded space-y-1">
-                <p className="font-medium text-sm">Player {idx + 1}</p>
+              <div key={idx} className="ml-4 p-3 bg-gray-50 dark:bg-gray-700 rounded space-y-1">
+                <p className="font-medium text-sm dark:text-gray-300">Player {idx + 1}</p>
                 {Object.entries(player as Record<string, unknown>).map(
                   ([pKey, pValue]) => (
-                    <div key={pKey} className="text-sm">
-                      <span className="font-medium">{pKey}:</span>{" "}
+                    <div key={pKey} className="text-sm dark:text-gray-400">
+                      <span className="font-medium dark:text-gray-300">{pKey}:</span>{" "}
                       {renderFieldValue(pValue)}
                     </div>
                   )
@@ -103,12 +103,12 @@ export default function EditFormDialog({ form, onClose, onUpdate }: Props) {
       } else if (key === "coachFields" && typeof value === "object") {
         return (
           <div key={key} className="space-y-2">
-            <h4 className="font-semibold text-sm">Coach Details</h4>
-            <div className="ml-4 p-3 bg-gray-50 rounded space-y-1">
+            <h4 className="font-semibold text-sm dark:text-gray-300">Coach Details</h4>
+            <div className="ml-4 p-3 bg-gray-50 dark:bg-gray-700 rounded space-y-1">
               {Object.entries(value as Record<string, unknown>).map(
                 ([cKey, cValue]) => (
-                  <div key={cKey} className="text-sm">
-                    <span className="font-medium">{cKey}:</span>{" "}
+                  <div key={cKey} className="text-sm dark:text-gray-400">
+                    <span className="font-medium dark:text-gray-300">{cKey}:</span>{" "}
                     {renderFieldValue(cValue)}
                   </div>
                 )
@@ -119,8 +119,8 @@ export default function EditFormDialog({ form, onClose, onUpdate }: Props) {
       } else {
         return (
           <div key={key} className="space-y-1">
-            <Label className="text-sm font-medium">{key}</Label>
-            <p className="text-sm text-gray-700">{renderFieldValue(value)}</p>
+            <Label className="text-sm font-medium dark:text-gray-300">{key}</Label>
+            <p className="text-sm text-gray-700 dark:text-gray-400">{renderFieldValue(value)}</p>
           </div>
         );
       }
@@ -129,16 +129,16 @@ export default function EditFormDialog({ form, onClose, onUpdate }: Props) {
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto dark:bg-gray-800 dark:border-gray-700">
         <DialogHeader>
-          <DialogTitle>Form Details - {form.title}</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="dark:text-white">Form Details - {form.title}</DialogTitle>
+          <DialogDescription className="dark:text-gray-400">
             View and manage form submission
           </DialogDescription>
         </DialogHeader>
 
         <Tabs defaultValue="details" className="w-full">
-          <TabsList>
+          <TabsList className="dark:bg-gray-700">
             <TabsTrigger value="details">Form Details</TabsTrigger>
             <TabsTrigger value="owner">Owner Info</TabsTrigger>
           </TabsList>
@@ -146,23 +146,23 @@ export default function EditFormDialog({ form, onClose, onUpdate }: Props) {
           <TabsContent value="details" className="space-y-4">
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="status">Status</Label>
+                <Label htmlFor="status" className="dark:text-gray-300">Status</Label>
                 <Select value={status} onValueChange={setStatus}>
-                  <SelectTrigger id="status">
+                  <SelectTrigger id="status" className="dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="draft">Draft</SelectItem>
-                    <SelectItem value="submitted">Submitted</SelectItem>
-                    <SelectItem value="confirmed">Confirmed</SelectItem>
-                    <SelectItem value="rejected">Rejected</SelectItem>
+                  <SelectContent className="dark:bg-gray-700 dark:border-gray-600" className="dark:bg-gray-700 dark:border-gray-600">
+                    <SelectItem value="draft" className="dark:text-gray-300 dark:hover:bg-gray-600">Draft</SelectItem>
+                    <SelectItem value="submitted" className="dark:text-gray-300 dark:hover:bg-gray-600">Submitted</SelectItem>
+                    <SelectItem value="confirmed" className="dark:text-gray-300 dark:hover:bg-gray-600">Confirmed</SelectItem>
+                    <SelectItem value="rejected" className="dark:text-gray-300 dark:hover:bg-gray-600">Rejected</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               {form.fields && (
-                <div className="space-y-4 border-t pt-4">
-                  <h3 className="font-semibold">Form Fields</h3>
+                <div className="space-y-4 border-t dark:border-gray-700 pt-4">
+                  <h3 className="font-semibold dark:text-white">Form Fields</h3>
                   <div className="space-y-3">
                     {renderFields(form.fields)}
                   </div>
@@ -170,7 +170,7 @@ export default function EditFormDialog({ form, onClose, onUpdate }: Props) {
               )}
 
               <DialogFooter>
-                <Button type="button" variant="outline" onClick={onClose}>
+                <Button type="button" variant="outline" onClick={onClose} className="dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700">
                   Cancel
                 </Button>
                 <Button type="submit" disabled={saving}>
@@ -184,36 +184,36 @@ export default function EditFormDialog({ form, onClose, onUpdate }: Props) {
             {form.owner ? (
               <div className="space-y-3">
                 <div>
-                  <Label className="text-sm font-medium">Name</Label>
-                  <p className="text-sm text-gray-700">{form.owner.name}</p>
+                  <Label className="text-sm font-medium dark:text-gray-300">Name</Label>
+                  <p className="text-sm text-gray-700 dark:text-gray-400">{form.owner.name}</p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium">Email</Label>
-                  <p className="text-sm text-gray-700">{form.owner.email}</p>
+                  <Label className="text-sm font-medium dark:text-gray-300">Email</Label>
+                  <p className="text-sm text-gray-700 dark:text-gray-400">{form.owner.email}</p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium">University</Label>
-                  <p className="text-sm text-gray-700">
+                  <Label className="text-sm font-medium dark:text-gray-300">University</Label>
+                  <p className="text-sm text-gray-700 dark:text-gray-400">
                     {form.owner.universityName}
                   </p>
                 </div>
               </div>
             ) : (
-              <p className="text-sm text-gray-500">No owner information available</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">No owner information available</p>
             )}
 
-            <div className="space-y-3 border-t pt-4">
+            <div className="space-y-3 border-t dark:border-gray-700 pt-4">
               <div>
-                <Label className="text-sm font-medium">Created At</Label>
-                <p className="text-sm text-gray-700">
+                <Label className="text-sm font-medium dark:text-gray-300">Created At</Label>
+                <p className="text-sm text-gray-700 dark:text-gray-400">
                   {form.createdAt
                     ? new Date(form.createdAt).toLocaleString()
                     : "N/A"}
                 </p>
               </div>
               <div>
-                <Label className="text-sm font-medium">Updated At</Label>
-                <p className="text-sm text-gray-700">
+                <Label className="text-sm font-medium dark:text-gray-300">Updated At</Label>
+                <p className="text-sm text-gray-700 dark:text-gray-400">
                   {form.updatedAt
                     ? new Date(form.updatedAt).toLocaleString()
                     : "N/A"}

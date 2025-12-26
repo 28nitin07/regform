@@ -205,7 +205,7 @@ export default function AdminDashboard() {
         {/* Tabs */}
         <Tabs defaultValue="users" className="space-y-4">
           <div className="flex justify-between items-center">
-            <TabsList>
+            <TabsList className="dark:bg-gray-800 dark:border-gray-700">
               <TabsTrigger value="users">
                 <Users className="h-4 w-4 mr-2" />
                 Users
@@ -245,27 +245,27 @@ export default function AdminDashboard() {
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
-                        <TableRow>
-                          <TableHead>Name</TableHead>
-                          <TableHead>Email</TableHead>
-                          <TableHead>Phone</TableHead>
-                          <TableHead>University</TableHead>
-                          <TableHead>Verified</TableHead>
-                          <TableHead>Registered</TableHead>
-                          <TableHead>Paid</TableHead>
-                          <TableHead>Forms</TableHead>
-                          <TableHead>Actions</TableHead>
+                        <TableRow className="dark:border-gray-700">
+                          <TableHead className="dark:text-gray-300">Name</TableHead>
+                          <TableHead className="dark:text-gray-300">Email</TableHead>
+                          <TableHead className="dark:text-gray-300">Phone</TableHead>
+                          <TableHead className="dark:text-gray-300">University</TableHead>
+                          <TableHead className="dark:text-gray-300">Verified</TableHead>
+                          <TableHead className="dark:text-gray-300">Registered</TableHead>
+                          <TableHead className="dark:text-gray-300">Paid</TableHead>
+                          <TableHead className="dark:text-gray-300">Forms</TableHead>
+                          <TableHead className="dark:text-gray-300">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {users.map((user) => (
-                          <TableRow key={user._id}>
-                            <TableCell className="font-medium">
+                          <TableRow key={user._id} className="dark:border-gray-700">
+                            <TableCell className="font-medium dark:text-white">
                               {user.name}
                             </TableCell>
-                            <TableCell>{user.email}</TableCell>
-                            <TableCell>{user.phone || "N/A"}</TableCell>
-                            <TableCell className="max-w-xs truncate">
+                            <TableCell className="dark:text-gray-300">{user.email}</TableCell>
+                            <TableCell className="dark:text-gray-300">{user.phone || "N/A"}</TableCell>
+                            <TableCell className="max-w-xs truncate dark:text-gray-300">
                               {user.universityName}
                             </TableCell>
                             <TableCell>
@@ -299,6 +299,7 @@ export default function AdminDashboard() {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => setSelectedUser(user)}
+                                className="dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
                               >
                                 Edit
                               </Button>
@@ -331,20 +332,20 @@ export default function AdminDashboard() {
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
-                        <TableRow>
-                          <TableHead>Sport/Event</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>User Name</TableHead>
-                          <TableHead>Email</TableHead>
-                          <TableHead>University</TableHead>
-                          <TableHead>Created At</TableHead>
-                          <TableHead>Actions</TableHead>
+                        <TableRow className="dark:border-gray-700">
+                          <TableHead className="dark:text-gray-300">Sport/Event</TableHead>
+                          <TableHead className="dark:text-gray-300">Status</TableHead>
+                          <TableHead className="dark:text-gray-300">User Name</TableHead>
+                          <TableHead className="dark:text-gray-300">Email</TableHead>
+                          <TableHead className="dark:text-gray-300">University</TableHead>
+                          <TableHead className="dark:text-gray-300">Created At</TableHead>
+                          <TableHead className="dark:text-gray-300">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {forms.map((form) => (
-                          <TableRow key={form._id}>
-                            <TableCell className="font-medium">
+                          <TableRow key={form._id} className="dark:border-gray-700">
+                            <TableCell className="font-medium dark:text-white">
                               {form.title}
                             </TableCell>
                             <TableCell>
@@ -358,12 +359,12 @@ export default function AdminDashboard() {
                                 {form.status}
                               </Badge>
                             </TableCell>
-                            <TableCell>{form.owner?.name || "N/A"}</TableCell>
-                            <TableCell>{form.owner?.email || "N/A"}</TableCell>
-                            <TableCell className="max-w-xs truncate">
+                            <TableCell className="dark:text-gray-300">{form.owner?.name || "N/A"}</TableCell>
+                            <TableCell className="dark:text-gray-300">{form.owner?.email || "N/A"}</TableCell>
+                            <TableCell className="max-w-xs truncate dark:text-gray-300">
                               {form.owner?.universityName || "N/A"}
                             </TableCell>
-                            <TableCell>
+                            <TableCell className="dark:text-gray-300">
                               {form.createdAt
                                 ? new Date(form.createdAt).toLocaleDateString()
                                 : "N/A"}
@@ -373,6 +374,7 @@ export default function AdminDashboard() {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => setSelectedForm(form)}
+                                className="dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
                               >
                                 View/Edit
                               </Button>

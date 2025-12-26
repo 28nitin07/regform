@@ -71,16 +71,16 @@ export default function EditUserDialog({ user, onClose, onUpdate }: Props) {
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto dark:bg-gray-800 dark:border-gray-700">
         <DialogHeader>
-          <DialogTitle>Edit User Registration</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="dark:text-white">Edit User Registration</DialogTitle>
+          <DialogDescription className="dark:text-gray-400">
             Make changes to user registration details
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Name</Label>
+            <Label htmlFor="name" className="dark:text-gray-300">Name</Label>
             <Input
               id="name"
               value={formData.name}
@@ -88,11 +88,12 @@ export default function EditUserDialog({ user, onClose, onUpdate }: Props) {
                 setFormData({ ...formData, name: e.target.value })
               }
               required
+              className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email" className="dark:text-gray-300">Email</Label>
             <Input
               id="email"
               type="email"
@@ -101,22 +102,24 @@ export default function EditUserDialog({ user, onClose, onUpdate }: Props) {
                 setFormData({ ...formData, email: e.target.value })
               }
               required
+              className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="phone">Phone</Label>
+            <Label htmlFor="phone" className="dark:text-gray-300">Phone</Label>
             <Input
               id="phone"
               value={formData.phone}
               onChange={(e) =>
                 setFormData({ ...formData, phone: e.target.value })
               }
+              className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="university">University Name</Label>
+            <Label htmlFor="university" className="dark:text-gray-300">University Name</Label>
             <Input
               id="university"
               value={formData.universityName}
@@ -124,12 +127,13 @@ export default function EditUserDialog({ user, onClose, onUpdate }: Props) {
                 setFormData({ ...formData, universityName: e.target.value })
               }
               required
+              className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
             />
           </div>
 
-          <div className="space-y-4 pt-4 border-t">
+          <div className="space-y-4 pt-4 border-t dark:border-gray-700">
             <div className="flex items-center justify-between">
-              <Label htmlFor="emailVerified">Email Verified</Label>
+              <Label htmlFor="emailVerified" className="dark:text-gray-300">Email Verified</Label>
               <Switch
                 id="emailVerified"
                 checked={formData.emailVerified}
@@ -140,7 +144,7 @@ export default function EditUserDialog({ user, onClose, onUpdate }: Props) {
             </div>
 
             <div className="flex items-center justify-between">
-              <Label htmlFor="registrationDone">Registration Completed</Label>
+              <Label htmlFor="registrationDone" className="dark:text-gray-300">Registration Completed</Label>
               <Switch
                 id="registrationDone"
                 checked={formData.registrationDone}
@@ -151,7 +155,7 @@ export default function EditUserDialog({ user, onClose, onUpdate }: Props) {
             </div>
 
             <div className="flex items-center justify-between">
-              <Label htmlFor="paymentDone">Payment Completed</Label>
+              <Label htmlFor="paymentDone" className="dark:text-gray-300">Payment Completed</Label>
               <Switch
                 id="paymentDone"
                 checked={formData.paymentDone}
@@ -163,7 +167,7 @@ export default function EditUserDialog({ user, onClose, onUpdate }: Props) {
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button type="button" variant="outline" onClick={onClose} className="dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700">
               Cancel
             </Button>
             <Button type="submit" disabled={saving}>
