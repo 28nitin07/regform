@@ -197,21 +197,7 @@ export default function AdminDashboard() {
               <CardDescription className="dark:text-gray-400">Submitted</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold dark:text-white
-          <Card>
-            <CardHeader className="pb-2">
-              <CardDescription>Total Forms</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.totalForms}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardDescription>Submitted</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.submittedForms}</div>
+              <div className="text-2xl font-bold dark:text-white">{stats.submittedForms}</div>
             </CardContent>
           </Card>
         </div>
@@ -224,7 +210,26 @@ export default function AdminDashboard() {
                 <Users className="h-4 w-4 mr-2" />
                 Users
               </TabsTrigger>
-              <Ta className="dark:bg-gray-800 dark:border-gray-700">
+              <TabsTrigger value="forms">
+                <FileText className="h-4 w-4 mr-2" />
+                Forms
+              </TabsTrigger>
+            </TabsList>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={fetchData}
+              disabled={loading}
+              className="dark:border-gray-600"
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
+              Refresh
+            </Button>
+          </div>
+
+          {/* Users Tab */}
+          <TabsContent value="users">
+            <Card className="dark:bg-gray-800 dark:border-gray-700">
               <CardHeader>
                 <CardTitle className="dark:text-white">Registered Users</CardTitle>
                 <CardDescription className="dark:text-gray-400">
@@ -234,20 +239,7 @@ export default function AdminDashboard() {
               <CardContent>
                 {loading ? (
                   <div className="flex justify-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-white
-          {/* Users Tab */}
-          <TabsContent value="users">
-            <Card>
-              <CardHeader>
-                <CardTitle>Registered Users</CardTitle>
-                <CardDescription>
-                  Manage all user registrations
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {loading ? (
-                  <div className="flex justify-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-white"></div>
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
