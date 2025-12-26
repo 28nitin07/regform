@@ -23,6 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import EditUserDialog from "./edit-user-dialog";
+import EditUserSimpleDialog from "./edit-user-simple-dialog";
 import EditUserAdvancedDialog from "./edit-user-advanced-dialog";
 import EditFormDialog from "./edit-form-dialog";
 import EditFormAdvancedDialog from "./edit-form-advanced-dialog";
@@ -244,7 +245,7 @@ export default function AdminDashboard() {
                     </CardDescription>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Label className="text-sm dark:text-gray-300">Advanced Mode</Label>
+                    <Label className="text-sm dark:text-gray-300">JSON Mode</Label>
                     <Switch
                       checked={advancedMode}
                       onCheckedChange={setAdvancedMode}
@@ -342,7 +343,7 @@ export default function AdminDashboard() {
                     </CardDescription>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Label className="text-sm dark:text-gray-300">Advanced Mode</Label>
+                    <Label className="text-sm dark:text-gray-300">JSON Mode</Label>
                     <Switch
                       checked={advancedMode}
                       onCheckedChange={setAdvancedMode}
@@ -420,7 +421,7 @@ export default function AdminDashboard() {
 
       {/* Edit Dialogs */}
       {selectedUser && !advancedMode && (
-        <EditUserDialog
+        <EditUserSimpleDialog
           user={selectedUser}
           onClose={() => setSelectedUser(null)}
           onUpdate={() => {
