@@ -119,12 +119,10 @@ export default function AdminDashboard() {
   const stats = {
     totalRegistrations: users.length,
     verifiedUsers: users.filter((u) => u.emailVerified).length,
-    totalPayments: payments.length,
-    verifiedPayments: payments.filter((p) => p.status === "verified").length,
-    totalUsers: users.length,
-    verifiedUsers: users.filter((u) => u.emailVerified).length,
     completedRegistrations: users.filter((u) => u.registrationDone).length,
     completedPayments: users.filter((u) => u.paymentDone).length,
+    totalPayments: payments.length,
+    verifiedPayments: payments.filter((p) => p.status === "verified").length,
     totalForms: forms.length,
     submittedForms: forms.filter((f) => f.status === "submitted").length,
   };
