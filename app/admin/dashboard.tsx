@@ -98,7 +98,8 @@ export default function AdminDashboard() {
     submittedForms: forms.filter((f) => f.status === "submitted").length,
   };
 
-  return ( dark:bg-gray-900 transition-colors">
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
       {/* Header */}
       <header className="bg-white dark:bg-gray-800 border-b dark:border-gray-700 transition-colors">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
