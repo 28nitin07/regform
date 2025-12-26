@@ -302,7 +302,20 @@ export default function AdminDashboard() {
                               >
                                 Edit
                               </Button>
-                  className="dark:bg-gray-800 dark:border-gray-700">
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Forms Tab */}
+          <TabsContent value="forms">
+            <Card className="dark:bg-gray-800 dark:border-gray-700">
               <CardHeader>
                 <CardTitle className="dark:text-white">Registration Forms</CardTitle>
                 <CardDescription className="dark:text-gray-400">
@@ -312,20 +325,7 @@ export default function AdminDashboard() {
               <CardContent>
                 {loading ? (
                   <div className="flex justify-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-white
-          {/* Forms Tab */}
-          <TabsContent value="forms">
-            <Card>
-              <CardHeader>
-                <CardTitle>Registration Forms</CardTitle>
-                <CardDescription>
-                  Manage all submitted forms
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {loading ? (
-                  <div className="flex justify-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-white"></div>
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
