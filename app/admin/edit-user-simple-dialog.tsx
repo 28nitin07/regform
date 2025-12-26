@@ -75,33 +75,6 @@ export default function EditUserSimpleDialog({ user, onClose, onUpdate }: Props)
   };
 
   return (
-        ...formData.submittedForms,
-        [sportKey]: {
-          ...sport,
-          fields: {
-            ...sport.fields,
-            playerFields,
-          },
-        },
-      },
-    });
-  };
-
-  const updateSportStatus = (sportKey: string, status: string) => {
-    const sport = formData.submittedForms[sportKey];
-    setFormData({
-      ...formData,
-      submittedForms: {
-        ...formData.submittedForms,
-        [sportKey]: {
-          ...sport,
-          status,
-        },
-      },
-    });
-  };
-
-  return (
     <Dialog open={true} onOpenChange={onClose}>
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto dark:bg-gray-800 dark:border-gray-700">
         <DialogHeader>
