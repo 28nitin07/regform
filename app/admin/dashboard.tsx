@@ -22,7 +22,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import EditUserDialog from "./edit-user-dialog";
 import EditUserSimpleDialog from "./edit-user-simple-dialog";
 import EditUserAdvancedDialog from "./edit-user-advanced-dialog";
 import EditFormDialog from "./edit-form-dialog";

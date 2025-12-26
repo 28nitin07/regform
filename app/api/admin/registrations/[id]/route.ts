@@ -87,6 +87,7 @@ export async function PATCH(
       const userId = new ObjectId(id);
 
       // Update or create form documents for each sport
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       for (const [sportKey, sportData] of Object.entries(body.submittedForms as Record<string, any>)) {
         const formData = {
           ownerId: userId,

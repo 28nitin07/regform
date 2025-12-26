@@ -255,6 +255,7 @@ export default function EditFormAdvancedDialog({ form, onClose, onUpdate }: Prop
                 <h4 className="font-semibold dark:text-white">
                   Current Players ({getPlayersList().length})
                 </h4>
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                 {getPlayersList().map((player: any, index: number) => (
                   <div
                     key={index}

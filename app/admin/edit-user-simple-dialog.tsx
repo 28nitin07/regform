@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -15,10 +15,9 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { sports } from "@/app/utils/forms/schema";
-import { Trash2, Plus, Save, RefreshCw, Edit2, Check, X } from "lucide-react";
+import { Trash2, Plus, Save, RefreshCw, Check, X } from "lucide-react";
 
 interface User {
   _id: string;
@@ -29,6 +28,7 @@ interface User {
   emailVerified?: boolean;
   registrationDone?: boolean;
   paymentDone?: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   submittedForms?: Record<string, any>;
 }
 
@@ -60,7 +60,6 @@ export default function EditUserSimpleDialog({ user, onClose, onUpdate }: Props)
   const [syncing, setSyncing] = useState(false);
   const [selectedSport, setSelectedSport] = useState<string>("");
   const [editingSport, setEditingSport] = useState<string | null>(null);
-  const [editingPlayer, setEditingPlayer] = useState<{ sportKey: string; index: number } | null>(null);
   const [newPlayer, setNewPlayer] = useState<Player>({ name: "", email: "", phone: "", date: "" });
 
   const handleSubmit = async () => {
@@ -180,27 +179,6 @@ export default function EditUserSimpleDialog({ user, onClose, onUpdate }: Props)
 
     setNewPlayer({ name: "", email: "", phone: "", date: "" });
     setEditingSport(null);
-  };
-
-  const updatePlayer = (sportKey: string, index: number, updatedPlayer: Player) => {
-    const sport = formData.submittedForms[sportKey];
-    const playerFields = [...(sport.fields?.playerFields || [])];
-    playerFields[index] = updatedPlayer;
-
-    setFormData({
-      ...formData,
-      submittedForms: {
-        ...formData.submittedForms,
-        [sportKey]: {
-          ...sport,
-          fields: {
-            ...sport.fields,
-            playerFields,
-          },
-        },
-      },
-    });
-    setEditingPlayer(null);
   };
 
   const removePlayer = (sportKey: string, index: number) => {
@@ -338,6 +316,7 @@ export default function EditUserSimpleDialog({ user, onClose, onUpdate }: Props)
                   No sport registrations yet. Add one above!
                 </p>
               ) : (
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 Object.entries(formData.submittedForms).map(([sportKey, sportData]: [string, any]) => (
                   <div
                     key={sportKey}
@@ -463,6 +442,7 @@ export default function EditUserSimpleDialog({ user, onClose, onUpdate }: Props)
                               </TableRow>
                             </TableHeader>
                             <TableBody>
+                              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                               {sportData.fields.playerFields.map((player: any, idx: number) => (
                                 <TableRow key={idx} className="dark:border-gray-700">
                                   <TableCell className="dark:text-gray-300">{idx + 1}</TableCell>

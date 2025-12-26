@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { connectToDatabase } from "@/lib/mongodb";
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
     const session = await auth();
     if (!session?.user?.email) {
@@ -11,7 +11,6 @@ export async function GET(request: Request) {
 
     const { db } = await connectToDatabase();
     const paymentsCollection = db.collection("payments");
-    const usersCollection = db.collection("users");
 
     // Fetch all payments with user information
     const payments = await paymentsCollection

@@ -151,7 +151,7 @@ export default function EditFormDialog({ form, onClose, onUpdate }: Props) {
                   <SelectTrigger id="status" className="dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="dark:bg-gray-700 dark:border-gray-600" className="dark:bg-gray-700 dark:border-gray-600">
+                  <SelectContent className="dark:bg-gray-700 dark:border-gray-600">
                     <SelectItem value="draft" className="dark:text-gray-300 dark:hover:bg-gray-600">Draft</SelectItem>
                     <SelectItem value="submitted" className="dark:text-gray-300 dark:hover:bg-gray-600">Submitted</SelectItem>
                     <SelectItem value="confirmed" className="dark:text-gray-300 dark:hover:bg-gray-600">Confirmed</SelectItem>

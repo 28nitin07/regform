@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -29,6 +29,7 @@ interface User {
   emailVerified?: boolean;
   registrationDone?: boolean;
   paymentDone?: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   submittedForms?: Record<string, any>;
 }
 
@@ -260,6 +261,7 @@ export default function EditUserAdvancedDialog({ user, onClose, onUpdate }: Prop
                   No sport registrations yet
                 </p>
               ) : (
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 Object.entries(formData.submittedForms).map(([sportKey, sportData]: [string, any]) => (
                   <div
                     key={sportKey}

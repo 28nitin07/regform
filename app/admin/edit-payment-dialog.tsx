@@ -200,7 +200,7 @@ export default function EditPaymentDialog({ payment, onClose, onUpdate }: Props)
 
             <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
               <p className="text-sm text-blue-900 dark:text-blue-200">
-                <strong>Note:</strong> Setting status to "Verified" will automatically mark the user's payment as completed.
+                <strong>Note:</strong> Setting status to &quot;Verified&quot; will automatically mark the user&apos;s payment as completed.
               </p>
             </div>
 
