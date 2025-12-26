@@ -136,7 +136,19 @@ export default function AdminDashboard() {
                 size="sm"
                 onClick={() => signOut({ callbackUrl: "/admin/login" })}
                 className="dark:border-gray-600"
-                className="dark:bg-gray-800 dark:border-gray-700">
+              >
+                <LogOut className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+          <Card className="dark:bg-gray-800 dark:border-gray-700">
             <CardHeader className="pb-2">
               <CardDescription className="dark:text-gray-400">Total Users</CardDescription>
             </CardHeader>
