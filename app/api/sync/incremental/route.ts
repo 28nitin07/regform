@@ -129,7 +129,7 @@ export async function POST(req: NextRequest) {
  */
 function getSheetNameForCollection(collection: string): string {
   const sheetMap: Record<string, string> = {
-    'form': 'Forms',
+    'form': 'Registrations',
     'users': 'Users',
     'payments': '**Finance (Do Not Open)**'
   };
