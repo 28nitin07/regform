@@ -174,7 +174,21 @@ export async function POST(req: NextRequest) {
     // Format the record data
     const formattedRow = formatRecordForSheet(document, collection);
 
+    // Check if the user is marked as deleted
+    const isDeleted = document.deleted === true;
+
     if (rowIndex === -1) {
+      // Record doesn't exist in sheet
+      if (isDeleted) {
+        // User is deleted and not in sheet - nothing to do
+        return NextResponse.json({
+          success: true,
+          message: "Deleted record not in sheet, no action needed",
+          action: "skip",
+          recordId
+        });
+      }
+      
       // Record doesn't exist - append new row
       await sheets.spreadsheets.values.append({
         spreadsheetId,
@@ -192,6 +206,35 @@ export async function POST(req: NextRequest) {
         recordId
       });
     } else {
+      // Record exists in sheet
+      if (isDeleted) {
+        // Delete the row from Google Sheets
+        const rowNumber = rowIndex + 1; // 1-indexed
+        await sheets.spreadsheets.batchUpdate({
+          spreadsheetId,
+          requestBody: {
+            requests: [{
+              deleteDimension: {
+                range: {
+                  sheetId: await getSheetId(sheets, spreadsheetId, finalSheetName),
+                  dimension: 'ROWS',
+                  startIndex: rowIndex, // 0-indexed
+                  endIndex: rowIndex + 1
+                }
+              }
+            }]
+          }
+        });
+
+        return NextResponse.json({
+          success: true,
+          message: "Record deleted from sheet",
+          action: "delete",
+          recordId,
+          row: rowNumber
+        });
+      }
+      
       // Record exists - update the row
       const rowNumber = rowIndex + 1; // 1-indexed
       await sheets.spreadsheets.values.update({
@@ -420,4 +463,24 @@ function formatGenericRecord(doc: Record<string, unknown>): unknown[] {
     (doc._id as { toString: () => string }).toString(),
     JSON.stringify(doc)
   ];
+}
+
+/**
+ * Get the sheet ID for a given sheet name
+ */
+async function getSheetId(sheets: any, spreadsheetId: string, sheetName: string): Promise<number> {
+  const response = await sheets.spreadsheets.get({
+    spreadsheetId,
+    fields: 'sheets(properties(sheetId,title))'
+  });
+  
+  const sheet = response.data.sheets?.find(
+    (s: any) => s.properties.title === sheetName
+  );
+  
+  if (!sheet) {
+    throw new Error(`Sheet "${sheetName}" not found`);
+  }
+  
+  return sheet.properties.sheetId;
 }

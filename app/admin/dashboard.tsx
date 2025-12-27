@@ -27,7 +27,7 @@ import EditUserAdvancedDialog from "./edit-user-advanced-dialog";
 import EditFormDialog from "./edit-form-dialog";
 import EditFormAdvancedDialog from "./edit-form-advanced-dialog";
 import EditPaymentDialog from "./edit-payment-dialog";
-import { LogOut, Users, FileText, Moon, Sun, CreditCard, Search } from "lucide-react";
+import { LogOut, Users, FileText, Moon, Sun, CreditCard, Search, Trash2, RotateCcw } from "lucide-react";
 import { useTheme } from "./theme-provider";
 import { Input } from "@/components/ui/input";
 
@@ -42,6 +42,8 @@ interface User {
   paymentDone?: boolean;
   submittedForms?: Record<string, unknown>;
   createdAt?: string;
+  deleted?: boolean;
+  deletedAt?: string;
 }
 
 interface Form {
@@ -86,6 +88,7 @@ export default function AdminDashboard() {
   const [userSearchQuery, setUserSearchQuery] = useState("");
   const [formSearchQuery, setFormSearchQuery] = useState("");
   const [paymentSearchQuery, setPaymentSearchQuery] = useState("");
+  const [showDeletedUsers, setShowDeletedUsers] = useState(false);
 
   const fetchData = async (showLoading = false) => {
     if (showLoading) {
@@ -137,19 +140,59 @@ export default function AdminDashboard() {
     return () => clearInterval(interval);
   }, []);
 
+  const handleDeleteUser = async (userId: string) => {
+    try {
+      const response = await fetch(`/api/admin/users/${userId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ deleted: true }),
+      });
+
+      if (response.ok) {
+        fetchData(true);
+      } else {
+        console.error("Failed to delete user");
+      }
+    } catch (error) {
+      console.error("Error deleting user:", error);
+    }
+  };
+
+  const handleRestoreUser = async (userId: string) => {
+    try {
+      const response = await fetch(`/api/admin/users/${userId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ deleted: false }),
+      });
+
+      if (response.ok) {
+        fetchData(true);
+      } else {
+        console.error("Failed to restore user");
+      }
+    } catch (error) {
+      console.error("Error restoring user:", error);
+    }
+  };
+
   const stats = {
-    totalRegistrations: users.length,
-    verifiedUsers: users.filter((u) => u.emailVerified).length,
-    completedRegistrations: users.filter((u) => u.registrationDone).length,
-    completedPayments: users.filter((u) => u.paymentDone).length,
+    totalRegistrations: users.filter((u) => !u.deleted).length,
+    verifiedUsers: users.filter((u) => !u.deleted && u.emailVerified).length,
+    completedRegistrations: users.filter((u) => !u.deleted && u.registrationDone).length,
+    completedPayments: users.filter((u) => !u.deleted && u.paymentDone).length,
     totalPayments: payments.length,
     verifiedPayments: payments.filter((p) => p.status === "verified").length,
     totalForms: forms.length,
     submittedForms: forms.filter((f) => f.status === "submitted").length,
   };
 
-  // Filter users based on search query
+  // Filter users based on search query and deleted status
   const filteredUsers = users.filter((user) => {
+    // Filter by deleted status
+    if (showDeletedUsers && !user.deleted) return false;
+    if (!showDeletedUsers && user.deleted) return false;
+    
     const searchLower = userSearchQuery.toLowerCase();
     return (
       user.name.toLowerCase().includes(searchLower) ||
@@ -332,12 +375,21 @@ export default function AdminDashboard() {
                       Manage all user registrations
                     </CardDescription>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Label className="text-sm dark:text-gray-300">JSON Mode</Label>
-                    <Switch
-                      checked={advancedMode}
-                      onCheckedChange={setAdvancedMode}
-                    />
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <Label className="text-sm dark:text-gray-300">Show Deleted</Label>
+                      <Switch
+                        checked={showDeletedUsers}
+                        onCheckedChange={setShowDeletedUsers}
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Label className="text-sm dark:text-gray-300">JSON Mode</Label>
+                      <Switch
+                        checked={advancedMode}
+                        onCheckedChange={setAdvancedMode}
+                      />
+                    </div>
                   </div>
                 </div>
                 {/* Search Bar */}
@@ -380,9 +432,14 @@ export default function AdminDashboard() {
                       </TableHeader>
                       <TableBody>
                         {filteredUsers.map((user) => (
-                          <TableRow key={user._id} className="dark:border-gray-700">
+                          <TableRow key={user._id} className={`dark:border-gray-700 ${user.deleted ? 'opacity-60 bg-red-50 dark:bg-red-900/10' : ''}`}>
                             <TableCell className="font-medium dark:text-white">
-                              {user.name}
+                              <div className="flex items-center gap-2">
+                                {user.name}
+                                {user.deleted && (
+                                  <Badge variant="destructive" className="text-xs">Deleted</Badge>
+                                )}
+                              </div>
                             </TableCell>
                             <TableCell className="dark:text-gray-300">{user.email}</TableCell>
                             <TableCell className="dark:text-gray-300">{user.phone || "N/A"}</TableCell>
@@ -416,14 +473,39 @@ export default function AdminDashboard() {
                                 : 0}
                             </TableCell>
                             <TableCell>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setSelectedUser(user)}
-                                className="dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
-                              >
-                                Edit
-                              </Button>
+                              <div className="flex gap-2">
+                                {!user.deleted ? (
+                                  <>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => setSelectedUser(user)}
+                                      className="dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+                                    >
+                                      Edit
+                                    </Button>
+                                    <Button
+                                      variant="destructive"
+                                      size="sm"
+                                      onClick={() => handleDeleteUser(user._id)}
+                                      className="dark:bg-red-600 dark:hover:bg-red-700"
+                                    >
+                                      <Trash2 className="h-4 w-4 mr-1" />
+                                      Delete
+                                    </Button>
+                                  </>
+                                ) : (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleRestoreUser(user._id)}
+                                    className="dark:border-green-600 dark:text-green-400 dark:hover:bg-green-900"
+                                  >
+                                    <RotateCcw className="h-4 w-4 mr-1" />
+                                    Restore
+                                  </Button>
+                                )}
+                              </div>
                             </TableCell>
                           </TableRow>
                         ))}
