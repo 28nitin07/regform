@@ -337,14 +337,6 @@ export default function AdminDashboard() {
               <div className="text-2xl font-bold dark:text-white">{stats.verifiedPayments}</div>
             </CardContent>
           </Card>
-          <Card className="dark:bg-gray-800 dark:border-gray-700">
-            <CardHeader className="pb-2">
-              <CardDescription className="dark:text-gray-400">Verified Payments</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold dark:text-white">{stats.verifiedPayments}</div>
-            </CardContent>
-          </Card>
         </div>
 
         {/* Tabs */}
