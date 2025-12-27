@@ -78,6 +78,7 @@ export default function AdminDashboard() {
   const [forms, setForms] = useState<Form[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [selectedForm, setSelectedForm] = useState<Form | null>(null);
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
@@ -86,8 +87,10 @@ export default function AdminDashboard() {
   const [formSearchQuery, setFormSearchQuery] = useState("");
   const [paymentSearchQuery, setPaymentSearchQuery] = useState("");
 
-  const fetchData = async () => {
-    setLoading(true);
+  const fetchData = async (showLoading = false) => {
+    if (showLoading) {
+      setLoading(true);
+    }
     try {
       const [usersRes, formsRes, paymentsRes] = await Promise.all([
         fetch("/api/admin/registrations"),
@@ -112,16 +115,22 @@ export default function AdminDashboard() {
     } catch (error) {
       console.error("Error fetching data:", error);
     } finally {
-      setLoading(false);
+      if (showLoading) {
+        setLoading(false);
+      }
+      if (isInitialLoad) {
+        setIsInitialLoad(false);
+        setLoading(false);
+      }
     }
   };
 
   useEffect(() => {
-    fetchData();
+    fetchData(true); // Show loading on initial load
     
-    // Auto-reload every 2 seconds
+    // Auto-reload every 2 seconds without showing loading state
     const interval = setInterval(() => {
-      fetchData();
+      fetchData(false);
     }, 2000);
     
     // Cleanup interval on unmount
@@ -639,7 +648,7 @@ export default function AdminDashboard() {
           onClose={() => setSelectedUser(null)}
           onUpdate={() => {
             setSelectedUser(null);
-            fetchData();
+            fetchData(true);
           }}
         />
       )}
@@ -650,7 +659,7 @@ export default function AdminDashboard() {
           onClose={() => setSelectedUser(null)}
           onUpdate={() => {
             setSelectedUser(null);
-            fetchData();
+            fetchData(true);
           }}
         />
       )}
@@ -661,7 +670,7 @@ export default function AdminDashboard() {
           onClose={() => setSelectedForm(null)}
           onUpdate={() => {
             setSelectedForm(null);
-            fetchData();
+            fetchData(true);
           }}
         />
       )}
@@ -672,7 +681,7 @@ export default function AdminDashboard() {
           onClose={() => setSelectedForm(null)}
           onUpdate={() => {
             setSelectedForm(null);
-            fetchData();
+            fetchData(true);
           }}
         />
       )}
@@ -683,7 +692,7 @@ export default function AdminDashboard() {
           onClose={() => setSelectedPayment(null)}
           onUpdate={() => {
             setSelectedPayment(null);
-            fetchData();
+            fetchData(true);
           }}
         />
       )}
