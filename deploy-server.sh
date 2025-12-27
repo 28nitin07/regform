@@ -10,7 +10,7 @@ echo "=================================================="
 echo ""
 
 # Configuration
-REPO_URL="https://github.com/NEW-ORG/agneepath.git"  # Update this with your new repo URL
+REPO_URL="https://github.com/Agneepath-2025/regform.git"  # Update this with your new repo URL
 DEPLOY_PATH="/var/www/agneepath"  # Update with your deployment path
 APP_PORT=7000
 
