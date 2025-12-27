@@ -56,6 +56,28 @@ export async function POST(req: NextRequest) {
         );
       }
       document = paymentAggregation[0];
+    } else if (collection === "form") {
+      // For forms, include owner data
+      const formAggregation = await db.collection(collection).aggregate([
+        { $match: { _id: new ObjectId(recordId) } },
+        {
+          $lookup: {
+            from: "users",
+            localField: "ownerId",
+            foreignField: "_id",
+            as: "ownerData"
+          }
+        },
+        { $limit: 1 }
+      ]).toArray();
+      
+      if (formAggregation.length === 0) {
+        return NextResponse.json(
+          { success: false, message: "Record not found in database" },
+          { status: 404 }
+        );
+      }
+      document = formAggregation[0];
     } else {
       // For other collections, simple findOne
       const dataCollection = db.collection(collection);
@@ -87,26 +109,65 @@ export async function POST(req: NextRequest) {
 
     const finalSheetName = sheetName || getSheetNameForCollection(collection);
 
-    // Determine which column contains the ID based on collection
+    // Determine search strategy based on collection
     // Payments: Payment ID is in column D (4th column)
-    // Forms/Users: ID is in column A (1st column)
-    const idColumn = collection === "payments" ? "D" : "A";
+    // Users: Email is in column B (2nd column) - more reliable than hidden ID
+    // Forms: User Email + Sport combo in columns D + A
+    let searchColumn: string;
+    let searchValue: string;
+    
+    if (collection === "payments") {
+      searchColumn = "D";
+      searchValue = recordId.toString();
+    } else if (collection === "users") {
+      searchColumn = "B"; // Email column
+      searchValue = String(document.email || "");
+    } else if (collection === "form") {
+      // For forms, need to search by email (column D)
+      const owner = (document.ownerData as Record<string, unknown>[] | undefined)?.[0];
+      searchColumn = "D";
+      searchValue = String(owner?.email || "");
+    } else {
+      searchColumn = "A";
+      searchValue = recordId.toString();
+    }
 
     // Get existing sheet data to find the row
     const existingData = await sheets.spreadsheets.values.get({
       spreadsheetId,
-      range: `${finalSheetName}!${idColumn}:${idColumn}`, // Get ID column
+      range: `${finalSheetName}!${searchColumn}:${searchColumn}`, // Get search column
     });
 
     const rows = existingData.data.values || [];
-    const recordIdString = recordId.toString();
     
     // Find the row index (skip header row)
     let rowIndex = -1;
-    for (let i = 1; i < rows.length; i++) {
-      if (rows[i][0] === recordIdString) {
-        rowIndex = i;
-        break;
+    
+    if (collection === "form") {
+      // For forms, need to match BOTH email (column D) AND sport (column A)
+      // Get all rows to compare both columns
+      const allRowsResponse = await sheets.spreadsheets.values.get({
+        spreadsheetId,
+        range: `${finalSheetName}!A:D`,
+      });
+      const allRows = allRowsResponse.data.values || [];
+      const formTitle = String(document.title || "");
+      
+      for (let i = 1; i < allRows.length; i++) {
+        const rowSport = allRows[i][0] || ""; // Column A: Sport/Event
+        const rowEmail = allRows[i][3] || ""; // Column D: User Email
+        if (rowEmail === searchValue && rowSport === formTitle) {
+          rowIndex = i;
+          break;
+        }
+      }
+    } else {
+      // For other collections, simple match on search value
+      for (let i = 1; i < rows.length; i++) {
+        if (rows[i][0] === searchValue) {
+          rowIndex = i;
+          break;
+        }
       }
     }
 
@@ -193,39 +254,91 @@ function formatRecordForSheet(doc: Record<string, unknown>, collectionName: stri
 
 /**
  * Format a single form record
+ * Headers: ["Sport/Event", "Status", "University Name", "User Email", "User Phone", 
+ *           "Created At", "Updated At", "Player Count", "Player Names", "Player Emails", 
+ *           "Player Phones", "POC/Coach Name", "POC/Coach Email", "POC/Coach Phone"]
  */
 function formatFormRecord(doc: Record<string, unknown>): unknown[] {
+  const owner = (doc.ownerData as Record<string, unknown>[] | undefined)?.[0];
   const fields = doc.fields as Record<string, unknown> | undefined;
   const playerFields = (fields?.playerFields as Record<string, unknown>[]) || [];
   const coachFields = (fields?.coachFields as Record<string, unknown>) || {};
   
+  // Format dates
+  const formatDate = (dateValue: unknown): string => {
+    if (!dateValue) return "";
+    try {
+      const date = dateValue instanceof Date ? dateValue : new Date(dateValue as string);
+      return date.toLocaleString('en-US', { 
+        timeZone: 'Asia/Kolkata',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      });
+    } catch {
+      return "";
+    }
+  };
+  
+  // Extract player details
+  const playerNames = playerFields.map((p: Record<string, unknown>) => String(p.name || p.playerName || "")).join(" | ");
+  const playerEmails = playerFields.map((p: Record<string, unknown>) => String(p.email || "")).join(" | ");
+  const playerPhones = playerFields.map((p: Record<string, unknown>) => String(p.phone || "")).join(" | ");
+  
   return [
-    (doc._id as { toString: () => string }).toString(),
-    doc.ownerId ? (doc.ownerId as { toString: () => string }).toString() : "",
-    doc.title || "",
-    doc.status || "",
-    doc.createdAt ? new Date(doc.createdAt as string).toLocaleString() : "",
-    doc.updatedAt ? new Date(doc.updatedAt as string).toLocaleString() : "",
-    playerFields.length,
-    playerFields.map((p: Record<string, unknown>) => (p.name || p.playerName || "") as string).join(", "),
-    coachFields.name || "",
-    coachFields.contact || coachFields.phone || ""
+    String(doc.title || ""),
+    String(doc.status || ""),
+    String(owner?.universityName || ""),
+    String(owner?.email || ""),
+    String(owner?.phone || ""),
+    formatDate(doc.createdAt),
+    formatDate(doc.updatedAt),
+    playerFields.length.toString(),
+    playerNames,
+    playerEmails,
+    playerPhones,
+    String(coachFields.name || ""),
+    String(coachFields.email || ""),
+    String(coachFields.phone || coachFields.contact || "")
   ];
 }
 
 /**
  * Format a single user record
+ * Headers: ["Name", "Email", "Contact Number", "University", "Verified", 
+ *           "Registration Done", "Payment Done", "Created At"]
  */
 function formatUserRecord(doc: Record<string, unknown>): unknown[] {
+  const formatDate = (dateValue: unknown): string => {
+    if (!dateValue) return "";
+    try {
+      const date = dateValue instanceof Date ? dateValue : new Date(dateValue as string);
+      return date.toLocaleString('en-US', { 
+        timeZone: 'Asia/Kolkata',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      });
+    } catch {
+      return "";
+    }
+  };
+  
   return [
-    (doc._id as { toString: () => string }).toString(),
-    doc.name || "",
-    doc.email || "",
-    doc.universityName || "",
+    String(doc.name || ""),
+    String(doc.email || ""),
+    String(doc.phone || ""),
+    String(doc.universityName || ""),
     doc.emailVerified ? "Yes" : "No",
     doc.registrationDone ? "Yes" : "No",
     doc.paymentDone ? "Yes" : "No",
-    doc.createdAt ? new Date(doc.createdAt as string).toLocaleString() : ""
+    formatDate(doc.createdAt)
   ];
 }
 
