@@ -83,6 +83,8 @@ export default function AdminDashboard() {
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
   const [advancedMode, setAdvancedMode] = useState(false);
   const [userSearchQuery, setUserSearchQuery] = useState("");
+  const [formSearchQuery, setFormSearchQuery] = useState("");
+  const [paymentSearchQuery, setPaymentSearchQuery] = useState("");
 
   const fetchData = async () => {
     setLoading(true);
@@ -138,6 +140,32 @@ export default function AdminDashboard() {
       user.phone?.toLowerCase().includes(searchLower) ||
       user.universityName.toLowerCase().includes(searchLower) ||
       user._id.toLowerCase().includes(searchLower)
+    );
+  });
+
+  // Filter forms based on search query
+  const filteredForms = forms.filter((form) => {
+    const searchLower = formSearchQuery.toLowerCase();
+    return (
+      form.title.toLowerCase().includes(searchLower) ||
+      form.status.toLowerCase().includes(searchLower) ||
+      form.owner?.name.toLowerCase().includes(searchLower) ||
+      form.owner?.email.toLowerCase().includes(searchLower) ||
+      form.owner?.universityName.toLowerCase().includes(searchLower) ||
+      form._id.toLowerCase().includes(searchLower)
+    );
+  });
+
+  // Filter payments based on search query
+  const filteredPayments = payments.filter((payment) => {
+    const searchLower = paymentSearchQuery.toLowerCase();
+    return (
+      payment.userName?.toLowerCase().includes(searchLower) ||
+      payment.userEmail?.toLowerCase().includes(searchLower) ||
+      payment.universityName?.toLowerCase().includes(searchLower) ||
+      payment.transactionId?.toLowerCase().includes(searchLower) ||
+      payment.status.toLowerCase().includes(searchLower) ||
+      payment._id.toLowerCase().includes(searchLower)
     );
   });
 
@@ -416,6 +444,17 @@ export default function AdminDashboard() {
                     />
                   </div>
                 </div>
+                {/* Search Bar */}
+                <div className="mt-4 relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    type="text"
+                    placeholder="Search by sport, status, owner name, email, university, or ID..."
+                    value={formSearchQuery}
+                    onChange={(e) => setFormSearchQuery(e.target.value)}
+                    className="pl-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  />
+                </div>
               </CardHeader>
               <CardContent>
                 {loading ? (
@@ -424,6 +463,11 @@ export default function AdminDashboard() {
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
+                    {filteredForms.length === 0 ? (
+                      <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                        No forms found matching your search.
+                      </div>
+                    ) : (
                     <Table>
                       <TableHeader>
                         <TableRow className="dark:border-gray-700">
@@ -437,7 +481,7 @@ export default function AdminDashboard() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {forms.map((form) => (
+                        {filteredForms.map((form) => (
                           <TableRow key={form._id} className="dark:border-gray-700">
                             <TableCell className="font-medium dark:text-white">
                               {form.title}
@@ -477,6 +521,7 @@ export default function AdminDashboard() {
                         ))}
                       </TableBody>
                     </Table>
+                    )}
                   </div>
                 )}
               </CardContent>
@@ -491,6 +536,17 @@ export default function AdminDashboard() {
                 <CardDescription className="dark:text-gray-400">
                   Manage all payment transactions and verification
                 </CardDescription>
+                {/* Search Bar */}
+                <div className="mt-4 relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    type="text"
+                    placeholder="Search by name, email, university, transaction ID, status, or ID..."
+                    value={paymentSearchQuery}
+                    onChange={(e) => setPaymentSearchQuery(e.target.value)}
+                    className="pl-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  />
+                </div>
               </CardHeader>
               <CardContent>
                 {loading ? (
@@ -499,6 +555,11 @@ export default function AdminDashboard() {
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
+                    {filteredPayments.length === 0 ? (
+                      <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                        No payments found matching your search.
+                      </div>
+                    ) : (
                     <Table>
                       <TableHeader>
                         <TableRow className="dark:border-gray-700">
@@ -513,7 +574,7 @@ export default function AdminDashboard() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {payments.map((payment) => (
+                        {filteredPayments.map((payment) => (
                           <TableRow key={payment._id} className="dark:border-gray-700">
                             <TableCell className="font-medium dark:text-white">
                               {payment.userName || "N/A"}
@@ -560,6 +621,7 @@ export default function AdminDashboard() {
                         ))}
                       </TableBody>
                     </Table>
+                    )}
                   </div>
                 )}
               </CardContent>
