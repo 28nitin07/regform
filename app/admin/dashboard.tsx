@@ -196,14 +196,11 @@ export default function AdminDashboard() {
   };
 
   const stats = {
-    totalRegistrations: users.filter((u) => !u.deleted).length,
-    verifiedUsers: users.filter((u) => !u.deleted && u.emailVerified).length,
-    completedRegistrations: users.filter((u) => !u.deleted && u.registrationDone).length,
-    completedPayments: users.filter((u) => !u.deleted && u.paymentDone).length,
-    totalPayments: payments.length,
-    verifiedPayments: payments.filter((p) => p.status === "verified").length,
+    totalUsersVerified: users.filter((u) => !u.deleted && u.emailVerified).length,
+    registered: users.filter((u) => !u.deleted && u.registrationDone).length,
+    paidUnverified: payments.filter((p) => p.status !== "verified").length,
     totalForms: forms.length,
-    submittedForms: forms.filter((f) => f.status === "submitted").length,
+    verifiedPayments: payments.filter((p) => p.status === "verified").length,
   };
 
   // Filter users based on search query and deleted status
@@ -297,21 +294,13 @@ export default function AdminDashboard() {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
           <Card className="dark:bg-gray-800 dark:border-gray-700">
             <CardHeader className="pb-2">
-              <CardDescription className="dark:text-gray-400">Total Users</CardDescription>
+              <CardDescription className="dark:text-gray-400">Total Users (Verified)</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold dark:text-white">{stats.totalRegistrations}</div>
-            </CardContent>
-          </Card>
-          <Card className="dark:bg-gray-800 dark:border-gray-700">
-            <CardHeader className="pb-2">
-              <CardDescription className="dark:text-gray-400">Verified</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold dark:text-white">{stats.verifiedUsers}</div>
+              <div className="text-2xl font-bold dark:text-white">{stats.totalUsersVerified}</div>
             </CardContent>
           </Card>
           <Card className="dark:bg-gray-800 dark:border-gray-700">
@@ -319,18 +308,16 @@ export default function AdminDashboard() {
               <CardDescription className="dark:text-gray-400">Registered</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold dark:text-white">
-                {stats.completedRegistrations}
-              </div>
+              <div className="text-2xl font-bold dark:text-white">{stats.registered}</div>
             </CardContent>
           </Card>
           <Card className="dark:bg-gray-800 dark:border-gray-700">
             <CardHeader className="pb-2">
-              <CardDescription className="dark:text-gray-400">Paid</CardDescription>
+              <CardDescription className="dark:text-gray-400">Paid (Unverified)</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold dark:text-white">
-                {stats.completedPayments}
+                {stats.paidUnverified}
               </div>
             </CardContent>
           </Card>
@@ -344,10 +331,10 @@ export default function AdminDashboard() {
           </Card>
           <Card className="dark:bg-gray-800 dark:border-gray-700">
             <CardHeader className="pb-2">
-              <CardDescription className="dark:text-gray-400">Total Payments</CardDescription>
+              <CardDescription className="dark:text-gray-400">Verified Payments</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold dark:text-white">{stats.totalPayments}</div>
+              <div className="text-2xl font-bold dark:text-white">{stats.verifiedPayments}</div>
             </CardContent>
           </Card>
           <Card className="dark:bg-gray-800 dark:border-gray-700">
