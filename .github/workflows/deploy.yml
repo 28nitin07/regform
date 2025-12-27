@@ -80,7 +80,7 @@ jobs:
               echo "✅ PM2 process is running"
               
               # Test application endpoint
-              if curl -f http://localhost:3001 > /dev/null 2>&1; then
+              if curl -f http://localhost:7000 > /dev/null 2>&1; then
                 echo "✅ Application is responding"
                 exit 0
               else
