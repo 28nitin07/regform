@@ -479,10 +479,10 @@ async function getSheetId(
   });
   
   const sheet = response.data.sheets?.find(
-    (s: { properties: { title: string; sheetId: number } }) => s.properties.title === sheetName
+    (s) => s.properties?.title === sheetName
   );
   
-  if (!sheet) {
+  if (!sheet || !sheet.properties?.sheetId) {
     throw new Error(`Sheet "${sheetName}" not found`);
   }
   
