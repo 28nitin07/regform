@@ -131,7 +131,7 @@ function getSheetNameForCollection(collection: string): string {
   const sheetMap: Record<string, string> = {
     'form': 'Forms',
     'users': 'Users',
-    'payments': 'Payments'
+    'payments': '**Finance (Do Not Open)**'
   };
   return sheetMap[collection] || 'Sheet1';
 }

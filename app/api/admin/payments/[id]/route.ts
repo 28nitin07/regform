@@ -109,7 +109,7 @@ export async function PATCH(
         body: JSON.stringify({ 
           collection: "payments",
           recordId: id,
-          sheetName: "Payments"
+          sheetName: "**Finance (Do Not Open)**"
         }),
       }).catch(err => console.error("Payment sync failed:", err));
 
