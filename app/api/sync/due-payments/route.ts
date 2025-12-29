@@ -105,7 +105,7 @@ export async function POST(req: NextRequest) {
           playerDifference,
           amountDue: playerDifference * 800,
           status: playerDifference > 0 ? "pending" : "overpaid",
-          lastUpdated: form.updatedAt || form.createdAt || new Date(),
+          lastUpdated: payment.updatedAt || payment.createdAt || new Date(),
           resolutionStatus: duePaymentRecord?.resolutionStatus || "pending",
           forms: formDetails,
         });
