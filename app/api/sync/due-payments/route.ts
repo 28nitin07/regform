@@ -310,9 +310,9 @@ export async function POST(req: NextRequest) {
           valueInputOption: 'RAW',
           requestBody: {
             values: [[
-              "Date", "Time", "User Name", "Email", "University", "Transaction ID",
-              "Sports Modified", "Original Players", "Current Players", "Player Difference",
-              "Amount Due (₹)", "Payment Status", "Resolution Status"
+              "Date", "Time", "User Name", "Email", "University", "Original Transaction ID",
+              "Sports Modified", "Original Players", "Current Players", "Additional Players",
+              "Amount Due (₹)", "Status", "Resolution"
             ]]
           }
         });
