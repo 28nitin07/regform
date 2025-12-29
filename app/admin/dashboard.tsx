@@ -1080,7 +1080,9 @@ export default function AdminDashboard() {
                                 </summary>
                                 <div className="mt-2 p-3 bg-gray-50 dark:bg-gray-800 rounded space-y-2 max-w-md">
                                   {log.changes && Object.keys(log.changes).length > 0 ? (
-                                    Object.entries(log.changes).map(([field, change]: [string, any]) => (
+                                    Object.entries(log.changes).map(([field, change]) => {
+                                      const changeData = change as { before: unknown; after: unknown };
+                                      return (
                                       <div key={field} className="border-b border-gray-200 dark:border-gray-700 pb-2 last:border-0">
                                         <div className="font-semibold text-gray-700 dark:text-gray-300 mb-1 capitalize">
                                           {field.replace(/_/g, " ").replace(/([A-Z])/g, " $1").trim()}:
@@ -1089,33 +1091,33 @@ export default function AdminDashboard() {
                                           <div>
                                             <span className="text-gray-500 dark:text-gray-400">Before:</span>
                                             <div className="mt-1 p-2 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded">
-                                              {change.before === null || change.before === undefined 
+                                              {changeData.before === null || changeData.before === undefined 
                                                 ? "(empty)" 
-                                                : typeof change.before === "object"
-                                                ? JSON.stringify(change.before, null, 2)
-                                                : String(change.before)}
+                                                : typeof changeData.before === "object"
+                                                ? JSON.stringify(changeData.before, null, 2)
+                                                : String(changeData.before)}
                                             </div>
                                           </div>
                                           <div>
                                             <span className="text-gray-500 dark:text-gray-400">After:</span>
                                             <div className="mt-1 p-2 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded">
-                                              {change.after === null || change.after === undefined 
+                                              {changeData.after === null || changeData.after === undefined 
                                                 ? "(empty)" 
-                                                : typeof change.after === "object"
-                                                ? JSON.stringify(change.after, null, 2)
-                                                : String(change.after)}
+                                                : typeof changeData.after === "object"
+                                                ? JSON.stringify(changeData.after, null, 2)
+                                                : String(changeData.after)}
                                             </div>
                                           </div>
                                         </div>
                                       </div>
-                                    ))
+                                    )})
                                   ) : (
                                     <div className="text-gray-500 dark:text-gray-400">No field changes recorded</div>
                                   )}
                                   {log.metadata && Object.keys(log.metadata).length > 0 && (
                                     <div className="pt-2 mt-2 border-t border-gray-200 dark:border-gray-700">
                                       <div className="font-semibold text-gray-700 dark:text-gray-300 mb-2">Additional Info:</div>
-                                      {Object.entries(log.metadata).map(([key, value]: [string, any]) => (
+                                      {Object.entries(log.metadata).map(([key, value]) => (
                                         <div key={key} className="text-xs text-gray-600 dark:text-gray-400">
                                           <span className="font-medium capitalize">{key.replace(/_/g, " ")}:</span>{" "}
                                           {typeof value === "object" ? JSON.stringify(value) : String(value)}
