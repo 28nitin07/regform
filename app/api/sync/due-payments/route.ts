@@ -1,5 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
 import { google } from "googleapis";
+import { connectToDatabase } from "@/lib/mongodb";
+import { ObjectId } from "mongodb";
+
+interface DuePaymentRecord {
+  _id: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  universityName: string;
+  paymentId: string;
+  transactionId: string;
+  originalPlayerCount: number;
+  currentPlayerCount: number;
+  playerDifference: number;
+  amountDue: number;
+  status: string;
+  lastUpdated: Date;
+  resolutionStatus?: string;
+  forms: Array<{
+    formId: string;
+    sport: string;
+    originalPlayers: number;
+    currentPlayers: number;
+    difference: number;
+  }>;
+}
 
 /**
  * POST /api/sync/due-payments
@@ -11,18 +37,190 @@ export async function POST(req: NextRequest) {
   try {
     console.log("📊 Syncing due payments to Google Sheets...");
 
-    // Fetch due payments from the admin API
-    const baseUrl = process.env.NEXTAUTH_URL || process.env.ROOT_URL || 'http://localhost:3000';
-    const duePaymentsResponse = await fetch(`${baseUrl}/api/admin/due-payments`, {
-      headers: { 'Content-Type': 'application/json' }
-    });
+    // Calculate due payments directly from database
+    const { db } = await connectToDatabase();
+    const paymentsCollection = db.collection("payments");
+    const formsCollection = db.collection("form");
+    const usersCollection = db.collection("users");
+    const duePaymentsCollection = db.collection("duePayments");
 
-    if (!duePaymentsResponse.ok) {
-      throw new Error('Failed to fetch due payments');
+    const duePayments: DuePaymentRecord[] = [];
+
+    // PART 1: Track verified payments with player count changes
+    const payments = await paymentsCollection
+      .find({ status: "verified" })
+      .toArray();
+
+    for (const payment of payments) {
+      const snapshot = payment.baselineSnapshot || {};
+      const forms = await formsCollection
+        .find({ paymentId: payment._id.toString() })
+        .toArray();
+
+      let totalOriginal = 0;
+      let totalCurrent = 0;
+      const formDetails = [];
+
+      for (const form of forms) {
+        const originalCount = snapshot[form._id.toString()] || 0;
+        const currentCount = form.players?.length || 0;
+        const difference = currentCount - originalCount;
+
+        totalOriginal += originalCount;
+        totalCurrent += currentCount;
+
+        if (difference !== 0) {
+          formDetails.push({
+            formId: form._id.toString(),
+            sport: form.sport,
+            originalPlayers: originalCount,
+            currentPlayers: currentCount,
+            difference,
+          });
+        }
+      }
+
+      const playerDifference = totalCurrent - totalOriginal;
+
+      if (playerDifference !== 0) {
+        const user = await usersCollection.findOne({
+          _id: new ObjectId(payment.ownerId),
+        });
+
+        // Get resolution status
+        const duePaymentRecord = await duePaymentsCollection.findOne({
+          paymentId: payment._id.toString(),
+        });
+
+        duePayments.push({
+          _id: payment._id.toString(),
+          userId: payment.ownerId,
+          userName: user?.name || "Unknown",
+          userEmail: user?.email || "Unknown",
+          universityName: user?.university || "Unknown",
+          paymentId: payment._id.toString(),
+          transactionId: payment.transactionId || "N/A",
+          originalPlayerCount: totalOriginal,
+          currentPlayerCount: totalCurrent,
+          playerDifference,
+          amountDue: playerDifference * 800,
+          status: playerDifference > 0 ? "pending" : "overpaid",
+          lastUpdated: form.updatedAt || form.createdAt || new Date(),
+          resolutionStatus: duePaymentRecord?.resolutionStatus || "pending",
+          forms: formDetails,
+        });
+      }
     }
 
-    const duePaymentsResult = await duePaymentsResponse.json();
-    const duePayments = duePaymentsResult.data || [];
+    // PART 2: Track unpaid registrations
+    const unpaidUsers = await usersCollection
+      .find({
+        paymentId: { $exists: false },
+        submittedForms: { $exists: true, $ne: [] },
+      })
+      .toArray();
+
+    for (const user of unpaidUsers) {
+      const forms = await formsCollection
+        .find({ ownerId: user._id.toString() })
+        .toArray();
+
+      if (forms.length === 0) continue;
+
+      let totalPlayers = 0;
+      const formDetails = [];
+
+      for (const form of forms) {
+        const playerCount = form.players?.length || 0;
+        totalPlayers += playerCount;
+
+        formDetails.push({
+          formId: form._id.toString(),
+          sport: form.sport,
+          originalPlayers: 0,
+          currentPlayers: playerCount,
+          difference: playerCount,
+        });
+      }
+
+      const duePaymentRecord = await duePaymentsCollection.findOne({
+        userId: user._id.toString(),
+        status: "unpaid",
+      });
+
+      duePayments.push({
+        _id: `unpaid_${user._id.toString()}`,
+        userId: user._id.toString(),
+        userName: user.name || "Unknown",
+        userEmail: user.email || "Unknown",
+        universityName: user.university || "Unknown",
+        paymentId: "N/A",
+        transactionId: "N/A",
+        originalPlayerCount: 0,
+        currentPlayerCount: totalPlayers,
+        playerDifference: totalPlayers,
+        amountDue: totalPlayers * 800,
+        status: "unpaid",
+        lastUpdated: new Date(),
+        resolutionStatus: duePaymentRecord?.resolutionStatus || "pending",
+        forms: formDetails,
+      });
+    }
+
+    // PART 3: Track unverified payments
+    const unverifiedPayments = await paymentsCollection
+      .find({ status: { $ne: "verified" } })
+      .toArray();
+
+    for (const payment of unverifiedPayments) {
+      const forms = await formsCollection
+        .find({ paymentId: payment._id.toString() })
+        .toArray();
+
+      if (forms.length === 0) continue;
+
+      let totalPlayers = 0;
+      const formDetails = [];
+
+      for (const form of forms) {
+        const playerCount = form.players?.length || 0;
+        totalPlayers += playerCount;
+
+        formDetails.push({
+          formId: form._id.toString(),
+          sport: form.sport,
+          originalPlayers: 0,
+          currentPlayers: playerCount,
+          difference: playerCount,
+        });
+      }
+
+      const user = await usersCollection.findOne({
+        _id: new ObjectId(payment.ownerId),
+      });
+
+      const duePaymentRecord = await duePaymentsCollection.findOne({
+        paymentId: payment._id.toString(),
+      });
+
+      duePayments.push({
+        _id: payment._id.toString(),
+        userId: payment.ownerId,
+        userName: user?.name || "Unknown",
+        userEmail: user?.email || "Unknown",
+        universityName: user?.university || "Unknown",
+        paymentId: payment._id.toString(),
+        transactionId: payment.transactionId || "N/A",
+        originalPlayerCount: 0,
+        currentPlayerCount: totalPlayers,
+        playerDifference: totalPlayers,
+        amountDue: totalPlayers * 800,
+        status: "unverified",
+        lastUpdated: payment.updatedAt || payment.createdAt || new Date(),
+        resolutionStatus: duePaymentRecord?.resolutionStatus || "pending",
+        forms: formDetails,
+      });
+    }
 
     console.log(`📊 Found ${duePayments.length} due payment records to sync`);
 
