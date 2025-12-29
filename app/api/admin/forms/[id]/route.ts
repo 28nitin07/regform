@@ -167,14 +167,13 @@ export async function PATCH(
       );
 
       if (userUpdateResult.matchedCount > 0) {
-        console.log(`👤 User dashboard synced: ${result.ownerId} → ${result.title}: ${playerCount} players (${currentStatus})`);
+        console.log(`👤 User dashboard synced: ${result.ownerId} → ${result.title}: ${playerCount} players (${dashboardStatus})`);
       } else {
         console.warn(`⚠️ User not found for ownerId: ${result.ownerId}`);
       }
     } catch (error) {
       console.error("⚠️ Failed to update user submittedForms:", error);
       // Don't fail the entire request if user update fails
-    }
     }
 
     // 🔄 Automatically update payment record if player count changed
