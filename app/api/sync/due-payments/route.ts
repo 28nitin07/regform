@@ -54,7 +54,10 @@ export async function POST(req: NextRequest) {
     for (const payment of payments) {
       const snapshot = payment.baselineSnapshot || {};
       const forms = await formsCollection
-        .find({ paymentId: payment._id.toString() })
+        .find({ 
+          paymentId: payment._id.toString(),
+          status: "submitted"
+        })
         .toArray();
 
       // Skip if no baseline snapshot exists - means payment was just verified with current count
@@ -129,8 +132,8 @@ export async function POST(req: NextRequest) {
     }
 
     // PART 2 & 3: Track unpaid and unverified registrations
-    // Get all forms and group by owner
-    const allForms = await formsCollection.find({}).toArray();
+    // Get all forms and group by owner (only submitted forms)
+    const allForms = await formsCollection.find({ status: "submitted" }).toArray();
     const formsByOwner = new Map<string, typeof allForms>();
     
     for (const form of allForms) {
