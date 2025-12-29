@@ -55,9 +55,9 @@ export async function GET() {
       const user = await usersCollection.findOne({ _id: payment.ownerId });
       if (!user) continue;
 
-      // Get all forms for this user
+      // Get all forms for this user (only submitted registrations)
       const userForms = await formsCollection
-        .find({ ownerId: payment.ownerId })
+        .find({ ownerId: payment.ownerId, status: "submitted" })
         .toArray();
 
       let totalOriginalPlayers = 0;
@@ -172,8 +172,8 @@ export async function GET() {
     }
 
     // PART 2: Track unpaid/unverified registrations
-    // Get all forms first, then check their payment status
-    const allForms = await formsCollection.find({}).toArray();
+    // Get all forms first, then check their payment status (only submitted registrations)
+    const allForms = await formsCollection.find({ status: "submitted" }).toArray();
     
     // Group forms by ownerId
     const formsByOwner = new Map<string, typeof allForms>();
