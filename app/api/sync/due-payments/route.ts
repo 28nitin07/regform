@@ -62,8 +62,10 @@ export async function POST(req: NextRequest) {
       const formDetails = [];
 
       for (const form of forms) {
+        const fields = form.fields as Record<string, unknown> | undefined;
+        const playerFields = (fields?.playerFields as Record<string, unknown>[]) || [];
         const originalCount = snapshot[form._id.toString()] || 0;
-        const currentCount = form.players?.length || 0;
+        const currentCount = playerFields.length;
         const difference = currentCount - originalCount;
 
         totalOriginal += originalCount;
@@ -72,7 +74,7 @@ export async function POST(req: NextRequest) {
         if (difference !== 0) {
           formDetails.push({
             formId: form._id.toString(),
-            sport: form.sport,
+            sport: form.sport || form.title,
             originalPlayers: originalCount,
             currentPlayers: currentCount,
             difference,
@@ -148,7 +150,9 @@ export async function POST(req: NextRequest) {
       const formDetails = [];
 
       for (const form of userForms) {
-        const playerCount = form.players?.length || 0;
+        const fields = form.fields as Record<string, unknown> | undefined;
+        const playerFields = (fields?.playerFields as Record<string, unknown>[]) || [];
+        const playerCount = playerFields.length;
         totalPlayers += playerCount;
 
         formDetails.push({
