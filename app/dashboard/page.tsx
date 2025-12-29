@@ -45,9 +45,12 @@ const StatusDot = ({ status }: { status: string }) => (
 );
 
 const SportCard = ({ sport, players, status }: { sport: string, players: number, status: string }) => (
-  <div className="bg-white rounded-xl p-6 border border-gray-100 hover:border-black transition-all duration-300 group">
+  <div className="bg-white dark:bg-gray-900 rounded-xl p-6 
+  border border-gray-100 dark:border-gray-800">
+
     <div className="flex items-center justify-between mb-4">
-      <h3 className="font-bold text-lg text-gray-900 group-hover:text-black">
+      <h3 className="font-bold text-lg text-gray-900 dark:text-white">
+
         {sport.replace('_', ' ')}
       </h3>
       <Trophy className="w-5 h-5 text-black opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -65,10 +68,14 @@ const SportCard = ({ sport, players, status }: { sport: string, players: number,
 );
 
 const EmptyState = () => (
-  <div className="flex flex-col items-center justify-center p-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
+  <div className="flex flex-col items-center justify-center p-12 
+  bg-gray-50 dark:bg-gray-900 
+  rounded-xl 
+  border-2 border-dashed border-gray-200 dark:border-gray-700">
+
     <Medal className="w-16 h-16 text-gray-400 mb-4" />
-    <h3 className="text-xl font-bold text-gray-700 mb-2">No Sports Registered</h3>
-    <p className="text-gray-500 text-center max-w-md">
+   <h3 className="text-xl font-bold text-gray-700 dark:text-white mb-2">No Sports Registered</h3>
+    <p className="text-gray-500 dark:text-gray-300 text-center max-w-md">
       You haven't registered for any sports yet. Register for a sport to start your athletic journey!<br></br> you can register for a sport by going to Registration form page from side bar or clicking on this <Link href="/dashboard/regForm" className='text-blue-600'>link</Link>
     </p>
   </div>
@@ -161,7 +168,7 @@ export default function Dashboard() {
         desktopSize="md:text-8xl"
         mobileSize="text-3xl sm:text-2xl"
       />
-      <h3 className ="text-lg font-semibold text-gray-700 mt-1 mb-6 text-center">
+      <h3 className="text-lg font-semibold text-gray-700 dark:text-slate-100 mt-1 mb-6 text-center">
         30 January, 31 January, 1 February, 2026!
       </h3>
       
@@ -181,32 +188,61 @@ export default function Dashboard() {
       )}
 
       {/* Profile Card */}
-      <Card className="border-none shadow-lg mt-8">
-        <CardHeader className="border-b border-gray-100">
-          <CardTitle className="text-xl text-gray-900">Profile Information</CardTitle>
-        </CardHeader>
-        <CardContent className="pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="flex flex-col">
-              <span className="text-sm text-gray-500 mb-1">Name</span>
-              <span className="font-medium text-gray-900">{formattedName}</span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-sm text-gray-500 mb-1">University</span>
-              <span className="font-medium text-gray-900">{userData.universityName}</span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-sm text-gray-500 mb-1">Email</span>
-              <span className="font-medium text-gray-900">{userData.email}</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+     <Card
+  className="
+    mt-8
+    bg-white dark:bg-gray-900
+    border border-gray-100 dark:border-gray-800
+    shadow-lg
+  "
+>
+  <CardHeader className="pb-3">
+    <CardTitle className="text-xl text-gray-900 dark:text-white">
+      Profile Information
+    </CardTitle>
+  </CardHeader>
+
+  {/* Divider with SAME padding as content */}
+  <div className="px-6">
+    <div className="h-px w-full bg-gray-200 dark:bg-gray-700" />
+  </div>
+
+  <CardContent className="pt-6">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="flex flex-col">
+        <span className="text-sm text-gray-500 dark:text-gray-400 mb-1">
+          Name
+        </span>
+        <span className="font-medium text-gray-900 dark:text-white">
+          {formattedName}
+        </span>
+      </div>
+
+      <div className="flex flex-col">
+        <span className="text-sm text-gray-500 dark:text-gray-400 mb-1">
+          University
+        </span>
+        <span className="font-medium text-gray-900 dark:text-white">
+          {userData.universityName}
+        </span>
+      </div>
+
+      <div className="flex flex-col">
+        <span className="text-sm text-gray-500 dark:text-gray-400 mb-1">
+          Email
+        </span>
+        <span className="font-medium text-gray-900 dark:text-white">
+          {userData.email}
+        </span>
+      </div>
+    </div>
+  </CardContent>
+</Card>
 
       {/* Sports Registration Section */}
       <div className="space-y-6 mt-8 mb-8 pb-5">
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-gray-900">Registered Sports</h2>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Registered Sports</h2>
           {hasRegistrations && (
             <div className="flex items-center space-x-2 bg-black text-white px-4 py-2 rounded-full">
               <Trophy className="w-4 h-4" />

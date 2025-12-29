@@ -38,25 +38,26 @@ const MarkdownComponents: Components = {
   ),
 
   h3: ({ children }) => (
-    <p className="font-semibold text-gray-900 mt-6 mb-1">
+    <p className="font-semibold text-gray-900 dark:text-slate-200 mt-6 mb-1">
       {children}
     </p>
   ),
 
   p: ({ children }) => (
-    <p className="text-gray-700 leading-relaxed ml-4 mb-2">
+    <p className="text-black dark:text-slate-300 leading-relaxed ml-4 mb-2">
+
       {children}
     </p>
   ),
 
   ul: ({ children }) => (
-    <ul className="list-disc ml-8 mb-4 text-gray-700 space-y-1">
-      {children}
+    <ul className="list-disc ml-8 mb-4 text-gray-700 dark:text-slate-300 space-y-1">   {children}
     </ul>
   ),
 
   ol: ({ children }) => (
-    <ol className="list-decimal ml-8 mt-2 mb-4 space-y-1 text-gray-700">
+    <ol className="list-decimal ml-8 mt-2 mb-4 space-y-1 text-gray-700 dark:text-slate-300">
+
       {children}
     </ol>
   ),
@@ -72,7 +73,8 @@ const MarkdownComponents: Components = {
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="text-blue-600 underline"
+      className="text-blue-600 dark:text-blue-400 underline"
+
     >
       {children}
     </a>
@@ -114,7 +116,7 @@ export default function FAQPage() {
   {sections.map((section) => (
     <AccordionItem key={section.title} value={section.title}>
 
-      <AccordionTrigger className="text-xl font-semibold">
+      <AccordionTrigger className="text-xl font-semibold text-gray-900 dark:text-slate-200">
        <span>{section.title}</span>
 
       </AccordionTrigger>

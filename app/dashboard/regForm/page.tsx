@@ -19,7 +19,7 @@ const EmptyState = () => (
   <div className="flex flex-col items-center justify-center p-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
     <Medal className="w-16 h-16 text-gray-400 mb-4" />
     <h3 className="text-xl font-bold text-gray-700 mb-2">No Sports Registered</h3>
-    <p className="text-gray-500 text-center max-w-md">
+    <p className="text-gray-700 dark:text-gray-300">
       You haven't registered for any sports yet. Click on Select sport to start your athletic journey!
     </p>
   </div>
@@ -62,9 +62,13 @@ const ActionCell: React.FC<{ row: any }> = ({ row }) => {
         <AlertDialogContent>
           <AlertDialogTitle>Delete Form</AlertDialogTitle>
           <p>Are you sure you want to delete this form? This action cannot be undone.</p>
-          <div className="flex justify-end space-x-2 gap-2 items-end sticky bottom-0 right-0 pt-4 bg-white mt-4 mr-5">
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <Button onClick={async () => {
+          <div className="flex justify-end space-x-2 gap-2 items-end sticky bottom-0 right-0 pt-4 bg-transparent mt-4 mr-5">
+
+            <AlertDialogCancel className="bg-gray-800 text-white hover:bg-gray-700">
+  Cancel
+</AlertDialogCancel>
+            <Button className="bg-gray-800 text-white hover:bg-gray-700"
+             onClick={async () => {
                 try {
                   const response = await post("/api/form/deleteForm", {
                     id: _id,
@@ -269,28 +273,37 @@ export default function RegForm() {
     return (
       <div className="overflow-x-auto rounded-lg shadow-lg">
       <Table>
-        <TableHeader>
-          {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow key={headerGroup.id} className="bg-black hover:bg-black-200 group">
-              {headerGroup.headers.map((header) => (
-                <TableHead
-                  key={header.id}
-                  className="text-white text-center group-hover:bg-black-200 transition-colors duration-200"
-                >
-                  {header.isPlaceholder
-                    ? null
-                    : flexRender(header.column.columnDef.header, header.getContext())}
-                </TableHead>
-              ))}
-            </TableRow>
-          ))}
-        </TableHeader>
+  <TableHeader className="pointer-events-none">
+    {table.getHeaderGroups().map((headerGroup) => (
+      <TableRow
+  key={headerGroup.id}
+  className="bg-slate-800 hover:bg-slate-600"
+>
+        {headerGroup.headers.map((header) => (
+          <TableHead
+  key={header.id}
+  className="text-white text-center font-semibold"
+>
+            {header.isPlaceholder
+              ? null
+              : flexRender(
+                  header.column.columnDef.header,
+                  header.getContext()
+                )}
+          </TableHead>
+        ))}
+      </TableRow>
+    ))}
+  </TableHeader>
+
         <TableBody>
           {table.getRowModel().rows.length ? (
             table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id}>
+             <TableRow key={row.id} className="bg-transparent">
+
                 {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id} className="text-center">
+                  <TableCell key={cell.id} className="text-center text-gray-700 dark:text-gray-300">
+
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </TableCell>
                 ))}
@@ -328,28 +341,30 @@ export default function RegForm() {
             <h2 className="text-xl font-semibold mb-4">Important Information</h2>
             <div className="space-y-4 ml-4 mb-6">
               <div className="flex items-start gap-3">
-                <span className="flex-shrink-0 w-6 h-6 bg-black text-white rounded-full flex items-start justify-center text-sm" style={{paddingTop: "0.05rem"}}>1</span>
-                <p className="text-gray-700">Click on select sport to start filling out registration form for a sport</p>
+                <span className="flex-shrink-0 w-6 h-6 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded-full flex items-start justify-center text-sm" style={{paddingTop: "0.05rem"}}>1</span>
+               <p className="text-gray-700 dark:text-gray-300">Click on select sport to start filling out registration form for a sport</p>
               </div>
               
               <div className="flex items-start gap-3">
-                <span className="flex-shrink-0 w-6 h-6 bg-black text-white rounded-full flex items-start justify-center text-sm" style={{paddingTop: "0.05rem"}}>2</span>
-                <p className="text-gray-700">You can't edit a form once it has been submitted</p>
+                <span className="flex-shrink-0 w-6 h-6 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded-full flex items-start justify-center text-sm" style={{paddingTop: "0.05rem"}}>2</span>
+                <p className="text-gray-700 dark:text-gray-300">You can't edit a form once it has been submitted</p>
               </div>
               
               <div className="flex items-start gap-3">
-                <span className="flex-shrink-0 w-6 h-6 bg-black text-white rounded-full flex items-start justify-center text-sm">3</span>
-                <p className="text-gray-700">After submitting all forms, visit the payments page to pay for all registrations.</p>
+                <span className="flex-shrink-0 w-6 h-6 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded-full flex items-start justify-center text-sm">3</span>
+                <p className="text-gray-700 dark:text-gray-300">After submitting all forms, visit the payments page to pay for all registrations.</p>
                 </div>
               
               <div className="flex items-start gap-3">
-                <span className="flex-shrink-0 w-6 h-6 bg-black text-white rounded-full flex items-start justify-center text-sm">4</span>
-                <p className="text-gray-700">Once you submit the form, you'll receive a confirmation email with your responses. Our team will review your details and send a registration confirmation email. You can also check your registration status on the dashboard.</p>
+                <span className="flex-shrink-0 w-6 h-6 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded-full flex items-start justify-center text-sm">4</span>
+               <p className="text-gray-700 dark:text-gray-300">Once you submit the form, you'll receive a confirmation email with your responses. Our team will review your details and send a registration confirmation email. You can also check your registration status on the dashboard.</p>
                 </div>
               
               <div className="flex items-start gap-3">
-                <span className="flex-shrink-0 w-6 h-6 bg-black text-white rounded-full flex items-start justify-center text-sm">5</span>
-                <p className="text-gray-700">For any queries contact at <a href="mailto:agneepath@ashoka.edu.in" className="text-blue-600 hover:underline">agneepath@ashoka.edu.in</a> 
+                <span className="flex-shrink-0 w-6 h-6 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white rounded-full flex items-start justify-center text-sm">5</span>
+                <p className="text-gray-700 dark:text-gray-300">
+                 For any queries contact at <a href="mailto:agneepath@ashoka.edu.in" className="text-blue-600
+ hover:underline">agneepath@ashoka.edu.in</a> 
                 {/* or you can generate a support request from the sidebar */}
                 </p>
               </div>
@@ -366,7 +381,8 @@ export default function RegForm() {
         <div className="w-full mt-6 pb-6 pr-5">
           {loading ? (
             <div className="flex items-center justify-center h-64">
-              <div className="w-12 h-12 border-4 border-black border-t-transparent rounded-full animate-spin"></div>
+              <div className="w-12 h-12 border-4 border-gray-800 dark:border-gray-200 border-t-transparent rounded-full animate-spin"></div>
+
             </div>
           ) : data.length === 0 ? (
             <EmptyState />
@@ -376,7 +392,13 @@ export default function RegForm() {
         </div>
         <AlertDialog>
         <AlertDialogTrigger asChild>
-          <div className="pr-5 pb-5"><button className="w-full p-3 rounded-md bg-primary text-white flex flex-row items-center justify-center gap-5"><span>Finalise Registrations</span><ArrowRight size={18} /></button></div>
+          <div className="pr-5 pb-5"><button
+  className="w-full p-3 rounded-md
+  bg-[#101827] text-white
+  hover:bg-[#1a2338]
+  flex flex-row items-center justify-center gap-5"
+>
+<span>Finalise Registrations</span><ArrowRight size={18} /></button></div>
         </AlertDialogTrigger>
         <AlertDialogContent>
           <AlertDialogTitle>Finalise Registrations</AlertDialogTitle>
@@ -388,7 +410,8 @@ export default function RegForm() {
                   Finalising your registrations will lock all your submitted forms. You won't be able to make any further edits. Are you sure you want to proceed?
                 </p> : <></>}
             </>
-          <div className="flex justify-end space-x-2 items-end sticky bottom-0 right-0 pt-4 bg-white mt-4 mr-5">
+         <div className="flex justify-end space-x-2 gap-2 items-end sticky bottom-0 right-0 pt-4 bg-white text-black dark:bg-gray-900 mt-4 mr-5">
+
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             {data.filter((form) => form.status === "submitted").length > 0 ? <Button onClick={completeRegistration}>
               Confirm

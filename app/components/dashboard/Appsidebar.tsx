@@ -11,6 +11,7 @@ import { usePathname } from "next/navigation";
 
 
 
+
 import {
   Sidebar,
   SidebarContent,
@@ -178,7 +179,16 @@ const getAuthToken = (): string | null => {
   {/* STEP 1 */}
   <button
     onClick={() => router.push("/dashboard")}
-    className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-400 hover:bg-gray-200"
+   className="
+  w-8 h-8
+  flex items-center justify-center
+  rounded-full
+  border border-gray-400 dark:border-gray-600
+  text-gray-700 dark:text-gray-200
+  hover:bg-gray-200 dark:hover:bg-gray-700
+  hover:text-gray-900 dark:hover:text-white
+  transition-colors
+"
   >
     1
   </button>
@@ -188,7 +198,16 @@ const getAuthToken = (): string | null => {
   {/* STEP 2 */}
   <button
     onClick={() => router.push("/dashboard/regForm")}
-    className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-400 hover:bg-gray-200"
+    className="
+  w-8 h-8
+  flex items-center justify-center
+  rounded-full
+  border border-gray-400 dark:border-gray-600
+  text-gray-700 dark:text-gray-200
+  hover:bg-gray-200 dark:hover:bg-gray-700
+  hover:text-gray-900 dark:hover:text-white
+  transition-colors
+"
   >
     2
   </button>
@@ -198,7 +217,16 @@ const getAuthToken = (): string | null => {
   {/* STEP 3 */}
   <button
     onClick={() => router.push("/dashboard/Payments")}
-    className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-400 hover:bg-gray-200"
+   className="
+  w-8 h-8
+  flex items-center justify-center
+  rounded-full
+  border border-gray-400 dark:border-gray-600
+  text-gray-700 dark:text-gray-200
+  hover:bg-gray-200 dark:hover:bg-gray-700
+  hover:text-gray-900 dark:hover:text-white
+  transition-colors
+"
   >
     3
   </button>
@@ -208,7 +236,16 @@ const getAuthToken = (): string | null => {
   {/* STEP 4 — sends user back to dashboard */}
   <button
     onClick={() => router.push("/dashboard")}
-    className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-400 hover:bg-gray-200"
+    className="
+  w-8 h-8
+  flex items-center justify-center
+  rounded-full
+  border border-gray-400 dark:border-gray-600
+  text-gray-700 dark:text-gray-200
+  hover:bg-gray-200 dark:hover:bg-gray-700
+  hover:text-gray-900 dark:hover:text-white
+  transition-colors
+"
   >
     4
   </button>
@@ -248,15 +285,22 @@ const getAuthToken = (): string | null => {
             <SidebarMenu>
   {items.map((item) => (
     <SidebarMenuItem key={item.title}>
-      <Link 
-        href={item.disabled ? "#" : item.url}
-        className={`flex items-center space-x-2 text-lg font-medium px-3 py-2 rounded-md 
-          hover:bg-gray-200
-          ${item.disabled ? "cursor-not-allowed opacity-50 pointer-events-none" : ""}`}
+      <SidebarMenuButton
+        asChild
+        disabled={item.disabled}
+        className={`
+          text-lg font-medium
+          ${item.disabled ? "opacity-50 pointer-events-none" : ""}
+        `}
       >
-        <item.icon className="h-5 w-5" />
-        <span>{item.title}</span>
-      </Link>
+        <Link
+          href={item.disabled ? "#" : item.url}
+          className="flex items-center space-x-2"
+        >
+          <item.icon className="h-5 w-5" />
+          <span>{item.title}</span>
+        </Link>
+      </SidebarMenuButton>
     </SidebarMenuItem>
   ))}
 </SidebarMenu>

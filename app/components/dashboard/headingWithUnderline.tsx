@@ -15,7 +15,8 @@ export default function HeadingWithUnderline({
       <div className="text-center p-5 relative">
         {/* Heading Text */}
         <span
-          className={`font-extrabold text-gray-800 leading-tight ${mobileSize} ${desktopSize}`}
+          className={`font-extrabold text-gray-800 dark:text-white leading-tight ${mobileSize} ${desktopSize}`}
+
         >
           {text}
         </span>

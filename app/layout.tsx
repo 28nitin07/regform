@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import ThemeToggle from "@/components/theme-toggle";
 
 export const metadata: Metadata = {
   title: "Agneepath 7.0",
@@ -8,20 +9,18 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="icon" href="/favicon.ico" />
       </head>
 
-      {/* Use Georgia as the primary site font; keep other layout unchanged */}
-      <body style={{ fontFamily: "Georgia, serif" }} className="antialiased">
-        <div>
-          {children}
-        </div>
+      <body className="antialiased">
+        {children}
+        <ThemeToggle />
       </body>
     </html>
   );
