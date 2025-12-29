@@ -48,6 +48,7 @@ export async function PATCH(
     const { db } = await connectToDatabase();
     const paymentsCollection = db.collection("payments");
     const usersCollection = db.collection("users");
+    const formsCollection = db.collection("form");
 
     // Prepare update data
     const updateData: Record<string, unknown> = {
@@ -72,6 +73,38 @@ export async function PATCH(
     // Automatically update registrationStatus when status changes
     if (body.status === "verified") {
       updateData.registrationStatus = "Confirmed";
+      
+      // Create baseline snapshot for due payments tracking if it doesn't exist
+      const existingPayment = await paymentsCollection.findOne({ _id: new ObjectId(id) });
+      if (existingPayment && existingPayment.ownerId) {
+        // Check if paymentData snapshot exists
+        const hasSnapshot = existingPayment.paymentData && 
+          (typeof existingPayment.paymentData === 'string' ? 
+            JSON.parse(existingPayment.paymentData) : 
+            existingPayment.paymentData)?.submittedForms;
+
+        if (!hasSnapshot) {
+          console.log(`📸 Creating payment baseline snapshot for payment ${id}`);
+          
+          // Get all current forms for this user
+          const userForms = await formsCollection
+            .find({ ownerId: existingPayment.ownerId })
+            .toArray();
+
+          const submittedForms: Record<string, { Players: number }> = {};
+          for (const form of userForms) {
+            const fields = form.fields as Record<string, unknown> | undefined;
+            const playerFields = (fields?.playerFields as Record<string, unknown>[]) || [];
+            submittedForms[form.title] = {
+              Players: playerFields.length
+            };
+          }
+
+          // Store the baseline snapshot
+          updateData.paymentData = JSON.stringify({ submittedForms });
+          console.log(`✅ Created baseline snapshot:`, submittedForms);
+        }
+      }
     } else if (body.status === "rejected") {
       updateData.registrationStatus = "Rejected";
     } else if (body.status === "pending") {
