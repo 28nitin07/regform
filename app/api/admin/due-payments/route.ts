@@ -143,8 +143,8 @@ export async function GET() {
 
       const playerDifference = totalCurrentPlayers - totalOriginalPlayers;
 
-      // Only add to due payments if there's a positive difference (more players added)
-      if (playerDifference > 0) {
+      // Show all changes (positive = amount due, negative = overpaid/refund)
+      if (playerDifference !== 0) {
         duePayments.push({
           _id: payment._id.toString(),
           userId: payment.ownerId.toString(),
@@ -157,7 +157,7 @@ export async function GET() {
           currentPlayerCount: totalCurrentPlayers,
           playerDifference,
           amountDue: playerDifference * 800,
-          status: "pending",
+          status: playerDifference > 0 ? "pending" : "overpaid",
           lastUpdated: new Date(),
           forms: formDetails
         });

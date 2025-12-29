@@ -252,8 +252,10 @@ export default function AdminDashboard() {
     paidUnverified: payments.filter((p) => p.status !== "verified").length,
     totalForms: forms.length,
     verifiedPayments: payments.filter((p) => p.status === "verified").length,
-    duePaymentsCount: duePayments.length,
-    totalAmountDue: duePayments.reduce((sum, dp) => sum + dp.amountDue, 0),
+    duePaymentsCount: duePayments.filter(dp => dp.amountDue > 0).length,
+    overpaidCount: duePayments.filter(dp => dp.amountDue < 0).length,
+    totalAmountDue: duePayments.reduce((sum, dp) => sum + (dp.amountDue > 0 ? dp.amountDue : 0), 0),
+    totalOverpaid: Math.abs(duePayments.reduce((sum, dp) => sum + (dp.amountDue < 0 ? dp.amountDue : 0), 0)),
   };
 
   // Filter users based on search query and deleted status
@@ -424,9 +426,9 @@ export default function AdminDashboard() {
               <TabsTrigger value="due-payments" className="relative">
                 <CreditCard className="h-4 w-4 mr-2" />
                 Due Payments
-                {stats.duePaymentsCount > 0 && (
+                {(stats.duePaymentsCount > 0 || stats.overpaidCount > 0) && (
                   <span className="ml-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
-                    {stats.duePaymentsCount}
+                    {stats.duePaymentsCount + stats.overpaidCount}
                   </span>
                 )}
               </TabsTrigger>
@@ -820,18 +822,28 @@ export default function AdminDashboard() {
                     className="pl-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                   />
                 </div>
-                {stats.duePaymentsCount > 0 && (
-                  <div className="mt-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-semibold text-yellow-900 dark:text-yellow-200">
-                          Total Due Payments: {stats.duePaymentsCount}
+                {(stats.duePaymentsCount > 0 || stats.overpaidCount > 0) && (
+                  <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {stats.duePaymentsCount > 0 && (
+                      <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                        <p className="text-sm font-semibold text-red-900 dark:text-red-200">
+                          ⚠️ Amount Due: {stats.duePaymentsCount} {stats.duePaymentsCount === 1 ? 'user' : 'users'}
                         </p>
-                        <p className="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
-                          Total Amount Due: ₹{stats.totalAmountDue.toLocaleString()}
+                        <p className="text-xs text-red-700 dark:text-red-300 mt-1">
+                          Total: ₹{stats.totalAmountDue.toLocaleString()}
                         </p>
                       </div>
-                    </div>
+                    )}
+                    {stats.overpaidCount > 0 && (
+                      <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                        <p className="text-sm font-semibold text-green-900 dark:text-green-200">
+                          💰 Overpaid: {stats.overpaidCount} {stats.overpaidCount === 1 ? 'user' : 'users'}
+                        </p>
+                        <p className="text-xs text-green-700 dark:text-green-300 mt-1">
+                          Total: ₹{stats.totalOverpaid.toLocaleString()}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 )}
               </CardHeader>
@@ -901,13 +913,13 @@ export default function AdminDashboard() {
                                 {duePayment.currentPlayerCount}
                               </TableCell>
                               <TableCell>
-                                <Badge variant="default" className="bg-orange-500">
-                                  +{duePayment.playerDifference}
+                                <Badge variant="default" className={duePayment.playerDifference > 0 ? "bg-orange-500" : "bg-green-500"}>
+                                  {duePayment.playerDifference > 0 ? "+" : ""}{duePayment.playerDifference}
                                 </Badge>
                               </TableCell>
                               <TableCell className="dark:text-gray-300">
-                                <span className="font-bold text-red-600 dark:text-red-400">
-                                  ₹{duePayment.amountDue.toLocaleString()}
+                                <span className={`font-bold ${duePayment.amountDue > 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
+                                  {duePayment.amountDue > 0 ? "₹" : "-₹"}{Math.abs(duePayment.amountDue).toLocaleString()}
                                 </span>
                               </TableCell>
                               <TableCell className="dark:text-gray-300">
