@@ -151,8 +151,8 @@ export async function POST(req: NextRequest) {
       const formTitle = String(document.title || "");
       
       for (let i = 1; i < rows.length; i++) {
-        const rowSport = rows[i][0] || ""; // Column A: Sport/Event
-        const rowEmail = rows[i][3] || ""; // Column D: User Email
+        const rowSport = String(rows[i][0] || "").trim(); // Column A: Sport/Event
+        const rowEmail = String(rows[i][3] || "").trim(); // Column D: User Email
         if (rowEmail === searchValue && rowSport === formTitle) {
           rowIndex = i;
           break;
@@ -160,18 +160,26 @@ export async function POST(req: NextRequest) {
       }
     } else if (collection === "payments") {
       // For payments, match on Payment ID in column D (index 3)
+      console.log(`🔍 Searching for payment ID: "${searchValue}" in ${rows.length} rows`);
       for (let i = 1; i < rows.length; i++) {
-        const rowPaymentId = rows[i][3] || ""; // Column D: Payment ID
+        // Payment ID should be in column D (index 3)
+        const rowPaymentId = String(rows[i][3] || "").trim();
+        console.log(`  Row ${i + 1}: Column D = "${rowPaymentId}" (length: ${rowPaymentId.length}, columns: ${rows[i].length})`);
+        
         if (rowPaymentId === searchValue) {
           rowIndex = i;
-          console.log(`✅ Found existing payment at row ${i + 1}: ${rowPaymentId}`);
+          console.log(`✅ Found existing payment at row ${i + 1}`);
           break;
         }
+      }
+      
+      if (rowIndex === -1) {
+        console.log(`❌ Payment ID "${searchValue}" not found in any row. Will append new row.`);
       }
     } else if (collection === "users") {
       // For users, match on Email in column B (index 1)
       for (let i = 1; i < rows.length; i++) {
-        const rowEmail = rows[i][1] || ""; // Column B: Email
+        const rowEmail = String(rows[i][1] || "").trim(); // Column B: Email
         if (rowEmail === searchValue) {
           rowIndex = i;
           break;
@@ -189,6 +197,12 @@ export async function POST(req: NextRequest) {
 
     // Format the record data
     const formattedRow = formatRecordForSheet(document, collection);
+    
+    console.log(`📝 Formatted row for ${collection}:`, {
+      columns: formattedRow.length,
+      paymentId: collection === "payments" ? formattedRow[3] : "N/A",
+      firstFewColumns: formattedRow.slice(0, 5)
+    });
 
     // Check if the user is marked as deleted
     const isDeleted = document.deleted === true;
@@ -206,6 +220,7 @@ export async function POST(req: NextRequest) {
       }
       
       // Record doesn't exist - append new row
+      console.log(`➕ Appending new row to sheet: ${finalSheetName}`);
       await sheets.spreadsheets.values.append({
         spreadsheetId,
         range: `${finalSheetName}!A:A`,
@@ -253,6 +268,7 @@ export async function POST(req: NextRequest) {
       
       // Record exists - update the row
       const rowNumber = rowIndex + 1; // 1-indexed
+      console.log(`🔄 Updating existing row ${rowNumber} in sheet: ${finalSheetName}`);
       await sheets.spreadsheets.values.update({
         spreadsheetId,
         range: `${finalSheetName}!A${rowNumber}:Z${rowNumber}`,
