@@ -126,6 +126,7 @@ export default function AdminDashboard() {
   const [selectedForm, setSelectedForm] = useState<Form | null>(null);
   const [selectedDuePayment, setSelectedDuePayment] = useState<DuePayment | null>(null);
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
+  const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
   const [advancedMode, setAdvancedMode] = useState(false);
   const [userSearchQuery, setUserSearchQuery] = useState("");
   const [formSearchQuery, setFormSearchQuery] = useState("");
@@ -1074,59 +1075,14 @@ export default function AdminDashboard() {
                               {(log.metadata?.adminEmail as string) || log.userEmail || "N/A"}
                             </TableCell>
                             <TableCell className="dark:text-gray-300">
-                              <details className="text-xs">
-                                <summary className="cursor-pointer text-blue-600 dark:text-blue-400 hover:underline">
-                                  View Changes
-                                </summary>
-                                <div className="mt-2 p-3 bg-gray-50 dark:bg-gray-800 rounded space-y-2 max-w-md">
-                                  {log.changes && Object.keys(log.changes).length > 0 ? (
-                                    Object.entries(log.changes).map(([field, change]) => {
-                                      const changeData = change as { before: unknown; after: unknown };
-                                      return (
-                                      <div key={field} className="border-b border-gray-200 dark:border-gray-700 pb-2 last:border-0">
-                                        <div className="font-semibold text-gray-700 dark:text-gray-300 mb-1 capitalize">
-                                          {field.replace(/_/g, " ").replace(/([A-Z])/g, " $1").trim()}:
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-2 text-xs">
-                                          <div>
-                                            <span className="text-gray-500 dark:text-gray-400">Before:</span>
-                                            <div className="mt-1 p-2 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded">
-                                              {changeData.before === null || changeData.before === undefined 
-                                                ? "(empty)" 
-                                                : typeof changeData.before === "object"
-                                                ? JSON.stringify(changeData.before, null, 2)
-                                                : String(changeData.before)}
-                                            </div>
-                                          </div>
-                                          <div>
-                                            <span className="text-gray-500 dark:text-gray-400">After:</span>
-                                            <div className="mt-1 p-2 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded">
-                                              {changeData.after === null || changeData.after === undefined 
-                                                ? "(empty)" 
-                                                : typeof changeData.after === "object"
-                                                ? JSON.stringify(changeData.after, null, 2)
-                                                : String(changeData.after)}
-                                            </div>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    )})
-                                  ) : (
-                                    <div className="text-gray-500 dark:text-gray-400">No field changes recorded</div>
-                                  )}
-                                  {log.metadata && Object.keys(log.metadata).length > 0 && (
-                                    <div className="pt-2 mt-2 border-t border-gray-200 dark:border-gray-700">
-                                      <div className="font-semibold text-gray-700 dark:text-gray-300 mb-2">Additional Info:</div>
-                                      {Object.entries(log.metadata).map(([key, value]) => (
-                                        <div key={key} className="text-xs text-gray-600 dark:text-gray-400">
-                                          <span className="font-medium capitalize">{key.replace(/_/g, " ")}:</span>{" "}
-                                          {typeof value === "object" ? JSON.stringify(value) : String(value)}
-                                        </div>
-                                      ))}
-                                    </div>
-                                  )}
-                                </div>
-                              </details>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setSelectedLog(log)}
+                                className="text-blue-600 dark:text-blue-400 hover:underline"
+                              >
+                                View Changes
+                              </Button>
                             </TableCell>
                           </TableRow>
                         ))
@@ -1315,6 +1271,137 @@ export default function AdminDashboard() {
                   </div>
                 </div>
               </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Audit Log Details Dialog */}
+      {selectedLog && (
+        <Dialog open={!!selectedLog} onOpenChange={() => setSelectedLog(null)}>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto dark:bg-gray-900 dark:border-gray-800">
+            <DialogHeader>
+              <DialogTitle className="dark:text-white">Audit Log Details</DialogTitle>
+              <DialogDescription className="dark:text-gray-400">
+                {selectedLog.action.replace(/_/g, " ")} - {new Date(selectedLog.timestamp).toLocaleString()}
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-6">
+              {/* Summary Section */}
+              <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <div>
+                  <p className="text-sm font-semibold text-gray-600 dark:text-gray-400">Action</p>
+                  <Badge
+                    variant="outline"
+                    className={
+                      selectedLog.action === "FORM_EDITED"
+                        ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
+                        : selectedLog.action === "PAYMENT_VERIFIED"
+                        ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                        : selectedLog.action === "PAYMENT_STATUS_UPDATED"
+                        ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
+                        : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400"
+                    }
+                  >
+                    {selectedLog.action.replace(/_/g, " ")}
+                  </Badge>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-600 dark:text-gray-400">Collection</p>
+                  <code className="text-sm bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded dark:text-white">
+                    {selectedLog.collection}
+                  </code>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-600 dark:text-gray-400">Admin</p>
+                  <p className="text-sm dark:text-white">
+                    {(selectedLog.metadata?.adminEmail as string) || selectedLog.userEmail || "N/A"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-600 dark:text-gray-400">Record ID</p>
+                  <p className="text-xs font-mono dark:text-white">{selectedLog.recordId}</p>
+                </div>
+              </div>
+
+              {/* Changes Section */}
+              {selectedLog.changes && Object.keys(selectedLog.changes).length > 0 ? (
+                <div>
+                  <h3 className="text-lg font-semibold mb-4 dark:text-white">What Changed:</h3>
+                  <div className="space-y-4">
+                    {Object.entries(selectedLog.changes).map(([field, change]) => {
+                      const changeData = change as { before: unknown; after: unknown };
+                      const formatValue = (value: unknown): string => {
+                        if (value === null || value === undefined) return "(empty)";
+                        if (typeof value === "object") return JSON.stringify(value, null, 2);
+                        if (typeof value === "boolean") return value ? "Yes" : "No";
+                        return String(value);
+                      };
+                      
+                      return (
+                        <div key={field} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-white dark:bg-gray-800/50">
+                          <div className="flex items-center gap-2 mb-3">
+                            <FileTextIcon className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                            <h4 className="font-semibold text-gray-900 dark:text-white capitalize">
+                              {field.replace(/_/g, " ").replace(/([A-Z])/g, " $1").trim()}
+                            </h4>
+                          </div>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Old Value</span>
+                              </div>
+                              <div className="p-3 bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-900/30 rounded-md">
+                                <pre className="text-sm text-red-800 dark:text-red-400 whitespace-pre-wrap break-words font-mono">
+                                  {formatValue(changeData.before)}
+                                </pre>
+                              </div>
+                            </div>
+                            
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">New Value</span>
+                              </div>
+                              <div className="p-3 bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-900/30 rounded-md">
+                                <pre className="text-sm text-green-800 dark:text-green-400 whitespace-pre-wrap break-words font-mono">
+                                  {formatValue(changeData.after)}
+                                </pre>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                  No field changes recorded for this action
+                </div>
+              )}
+
+              {/* Metadata Section */}
+              {selectedLog.metadata && Object.keys(selectedLog.metadata).length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold mb-3 dark:text-white">Additional Information:</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {Object.entries(selectedLog.metadata).map(([key, value]) => (
+                      <div key={key} className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                        <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase mb-1">
+                          {key.replace(/_/g, " ")}
+                        </p>
+                        <p className="text-sm dark:text-white">
+                          {typeof value === "object" ? JSON.stringify(value) : String(value)}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </DialogContent>
         </Dialog>
