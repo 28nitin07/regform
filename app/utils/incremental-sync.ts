@@ -80,14 +80,42 @@ export async function syncRecordToSheet(
     // Get existing sheet data to find the row
     const sheetData = await sheets.spreadsheets.values.get({
       spreadsheetId,
-      range: `${targetSheet}!A:A`,
+      range: `${targetSheet}!A:Z`,
     });
 
-    const existingIds = sheetData.data.values || [];
-    const docIdString = document._id.toString();
+    const allRows = sheetData.data.values || [];
     
-    // Find row index (0-based in array, but 1-based for sheets)
-    const rowIndex = existingIds.findIndex(([id]) => id === docIdString);
+    // Find row index based on collection-specific column
+    let rowIndex = -1;
+    
+    if (collection === "payments") {
+      // Payment ID is in column D (index 3)
+      const docIdString = document._id.toString();
+      for (let i = 1; i < allRows.length; i++) {
+        if (allRows[i][3] === docIdString) {
+          rowIndex = i;
+          break;
+        }
+      }
+    } else if (collection === "users") {
+      // Email is in column B (index 1)
+      const emailString = document.email || "";
+      for (let i = 1; i < allRows.length; i++) {
+        if (allRows[i][1] === emailString) {
+          rowIndex = i;
+          break;
+        }
+      }
+    } else {
+      // Other collections: ID in column A
+      const docIdString = document._id.toString();
+      for (let i = 1; i < allRows.length; i++) {
+        if (allRows[i][0] === docIdString) {
+          rowIndex = i;
+          break;
+        }
+      }
+    }
 
     // Transform document to row data based on collection
     let rowData: (string | number | boolean)[] = [];
@@ -96,23 +124,54 @@ export async function syncRecordToSheet(
       const owner = document.ownerData;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const forms = (document.formsData || []) as any[];
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const totalPlayers = forms.reduce((sum: number, f: any) => sum + (f.players?.length || 0), 0);
       
+      // Calculate sports and player count
+      const sports = forms.map((f: any) => f.title || "").filter(Boolean).join(", ");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const totalPlayers = forms.reduce((sum: number, f: any) => {
+        const fields = f.fields || {};
+        const playerFields = fields.playerFields || [];
+        return sum + playerFields.length;
+      }, 0);
+      const category = totalPlayers === 1 ? "Individual" : "Team";
+      
+      // Format date and time
+      const paymentDate = document.paymentDate ? new Date(document.paymentDate) : new Date();
+      const date = paymentDate.toLocaleDateString('en-IN', { 
+        timeZone: 'Asia/Kolkata',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      });
+      const time = paymentDate.toLocaleTimeString('en-IN', { 
+        timeZone: 'Asia/Kolkata',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      });
+      
+      const paymentProofUrl = document.paymentProof 
+        ? `${process.env.NEXTAUTH_URL || process.env.ROOT_URL || "http://localhost:3000"}/api/payments/proof/${document.paymentProof}`
+        : "";
+      
+      // Match the format: Date, Time, Transaction ID, Payment ID, Payment Amount, Account Holder Name, 
+      // University, Sports, Category, Player Count, Contact Number, Email, Payment Proof, Status, Send Email?
       rowData = [
+        date,
+        time,
+        String(document.transactionId || ""),
         document._id.toString(),
-        owner?.name || "",
-        owner?.phoneNumber || "",
-        owner?.email || "",
-        document.upiTransactionId || "",
-        document.screenshotUrl || "",
-        document.paymentAmount || 0,
-        document.paymentStatus || "pending",
-        document.paymentDone || false,
-        totalPlayers,
-        new Date(document.updatedAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }),
-        owner?.email || "",
-        owner?.phoneNumber || "",
+        String(document.amountInNumbers || document.amount || ""),
+        String(document.payeeName || ""),
+        String(owner?.universityName || ""),
+        sports,
+        category,
+        totalPlayers.toString(),
+        String(owner?.phone || ""),
+        String(owner?.email || ""),
+        paymentProofUrl,
+        document.registrationStatus || "Not Started",
+        document.sendEmail ? "Yes" : "No"
       ];
     } else if (collection === "users") {
       rowData = [
@@ -143,11 +202,12 @@ export async function syncRecordToSheet(
     }
 
     if (rowIndex >= 0) {
-      // Update existing row (skip header row, so +2)
-      const sheetRowNumber = rowIndex + 2;
+      // Update existing row (rowIndex is 0-based, row 0 is header, so rowIndex 1 = row 2 in sheet)
+      const sheetRowNumber = rowIndex + 1;
+      console.log(`🔄 Updating existing row ${sheetRowNumber} in ${targetSheet}`);
       await sheets.spreadsheets.values.update({
         spreadsheetId,
-        range: `${targetSheet}!A${sheetRowNumber}`,
+        range: `${targetSheet}!A${sheetRowNumber}:Z${sheetRowNumber}`,
         valueInputOption: "RAW",
         requestBody: {
           values: [rowData],
@@ -156,6 +216,7 @@ export async function syncRecordToSheet(
       console.log(`✅ Updated ${targetSheet} row ${sheetRowNumber}`);
     } else {
       // Append new row
+      console.log(`➕ Appending new row to ${targetSheet}`);
       await sheets.spreadsheets.values.append({
         spreadsheetId,
         range: `${targetSheet}!A:A`,
