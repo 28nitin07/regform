@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { connectToDatabase } from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
+import { logAuditEvent, calculateChanges } from "@/app/utils/audit-logger";
 
 export async function GET(
   request: Request,
@@ -123,6 +124,26 @@ export async function PATCH(
     if (!result) {
       return NextResponse.json({ error: "Form not found" }, { status: 404 });
     }
+
+    // Log audit event for form edit
+    const changes = calculateChanges(
+      existingForm as Record<string, unknown>,
+      result as Record<string, unknown>
+    );
+    await logAuditEvent({
+      timestamp: new Date(),
+      action: "FORM_EDITED",
+      collection: "form",
+      recordId: id,
+      userId: result.ownerId?.toString(),
+      userEmail: session.user.email,
+      changes,
+      metadata: {
+        adminEmail: session.user.email,
+        previousStatus: existingForm.status,
+        newStatus: result.status,
+      },
+    });
 
     // Safety check: Ensure form has an owner
     if (!result.ownerId) {

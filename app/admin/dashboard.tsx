@@ -29,7 +29,7 @@ import EditUserAdvancedDialog from "./edit-user-advanced-dialog";
 import EditFormDialog from "./edit-form-dialog";
 import EditFormAdvancedDialog from "./edit-form-advanced-dialog";
 import EditPaymentDialog from "./edit-payment-dialog";
-import { LogOut, Users, FileText, Moon, Sun, CreditCard, Search, Trash2, RotateCcw } from "lucide-react";
+import { LogOut, Users, FileText, Moon, Sun, CreditCard, Search, Trash2, RotateCcw, FileText as FileTextIcon } from "lucide-react";
 import { useTheme } from "./theme-provider";
 import { Input } from "@/components/ui/input";
 
@@ -100,6 +100,18 @@ interface DuePayment {
   }>;
 }
 
+interface AuditLog {
+  _id: string;
+  timestamp: string;
+  action: string;
+  collection: string;
+  recordId: string;
+  userId?: string;
+  userEmail?: string;
+  changes?: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
+}
+
 export default function AdminDashboard() {
   const { data: session } = useSession();
   const { theme, toggleTheme } = useTheme();
@@ -107,6 +119,7 @@ export default function AdminDashboard() {
   const [forms, setForms] = useState<Form[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [duePayments, setDuePayments] = useState<DuePayment[]>([]);
+  const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
@@ -125,11 +138,12 @@ export default function AdminDashboard() {
       setLoading(true);
     }
     try {
-      const [usersRes, formsRes, paymentsRes, duePaymentsRes] = await Promise.all([
+      const [usersRes, formsRes, paymentsRes, duePaymentsRes, logsRes] = await Promise.all([
         fetch("/api/admin/registrations"),
         fetch("/api/admin/forms"),
         fetch("/api/admin/payments"),
         fetch("/api/admin/due-payments"),
+        fetch("/api/admin/logs?limit=200"),
       ]);
 
       if (usersRes.ok) {
@@ -150,6 +164,11 @@ export default function AdminDashboard() {
       if (duePaymentsRes.ok) {
         const duePaymentsData = await duePaymentsRes.json();
         setDuePayments(duePaymentsData.data || []);
+      }
+
+      if (logsRes.ok) {
+        const logsData = await logsRes.json();
+        setLogs(logsData.data || []);
       }
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -436,6 +455,10 @@ export default function AdminDashboard() {
                     {stats.duePaymentsCount + stats.overpaidCount}
                   </span>
                 )}
+              </TabsTrigger>
+              <TabsTrigger value="logs">
+                <FileTextIcon className="h-4 w-4 mr-2" />
+                Logs
               </TabsTrigger>
             </TabsList>
             <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
@@ -1165,6 +1188,99 @@ export default function AdminDashboard() {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Logs Tab */}
+      <TabsContent value="logs">
+        <Card className="dark:bg-gray-900 dark:border-gray-800">
+          <CardHeader>
+            <CardTitle className="dark:text-white">Audit Logs</CardTitle>
+            <CardDescription className="dark:text-gray-400">
+              Track all changes made in the admin panel
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="rounded-md border dark:border-gray-800 overflow-auto max-h-[600px]">
+              <Table>
+                <TableHeader>
+                  <TableRow className="dark:border-gray-800 dark:hover:bg-gray-800/50">
+                    <TableHead className="dark:text-gray-300">Timestamp</TableHead>
+                    <TableHead className="dark:text-gray-300">Action</TableHead>
+                    <TableHead className="dark:text-gray-300">Collection</TableHead>
+                    <TableHead className="dark:text-gray-300">User</TableHead>
+                    <TableHead className="dark:text-gray-300">Admin</TableHead>
+                    <TableHead className="dark:text-gray-300">Details</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {logs.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center text-gray-500 dark:text-gray-400">
+                        No audit logs found
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    logs.map((log) => (
+                      <TableRow key={log._id} className="dark:border-gray-800 dark:hover:bg-gray-800/50">
+                        <TableCell className="font-mono text-xs dark:text-gray-300">
+                          {new Date(log.timestamp).toLocaleString()}
+                        </TableCell>
+                        <TableCell className="dark:text-gray-300">
+                          <Badge
+                            variant="outline"
+                            className={
+                              log.action === "FORM_EDITED"
+                                ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
+                                : log.action === "PAYMENT_VERIFIED"
+                                ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                                : log.action === "PAYMENT_STATUS_UPDATED"
+                                ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
+                                : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400"
+                            }
+                          >
+                            {log.action.replace(/_/g, " ")}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="dark:text-gray-300">
+                          <code className="text-xs bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
+                            {log.collection}
+                          </code>
+                        </TableCell>
+                        <TableCell className="dark:text-gray-300">
+                          <div className="text-sm">
+                            <div className="font-mono text-xs text-gray-500 dark:text-gray-500">
+                              {log.userId?.substring(0, 8)}...
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-sm text-gray-600 dark:text-gray-400">
+                          {(log.metadata?.adminEmail as string) || log.userEmail || "N/A"}
+                        </TableCell>
+                        <TableCell className="dark:text-gray-300">
+                          <details className="text-xs">
+                            <summary className="cursor-pointer text-blue-600 dark:text-blue-400 hover:underline">
+                              View Changes
+                            </summary>
+                            <pre className="mt-2 p-2 bg-gray-50 dark:bg-gray-800 rounded text-xs overflow-auto max-w-md">
+                              {JSON.stringify(
+                                {
+                                  changes: log.changes,
+                                  metadata: log.metadata,
+                                },
+                                null,
+                                2
+                              )}
+                            </pre>
+                          </details>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+      </TabsContent>
     </div>
   );
 }

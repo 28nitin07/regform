@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { connectToDatabase } from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
+import { logAuditEvent } from "@/app/utils/audit-logger";
 
 export async function GET(
   request: Request,
@@ -120,6 +121,26 @@ export async function PATCH(
     if (!result) {
       return NextResponse.json({ error: "Payment not found" }, { status: 404 });
     }
+
+    // Log audit event for payment verification
+    await logAuditEvent({
+      timestamp: new Date(),
+      action: body.status === "verified" ? "PAYMENT_VERIFIED" : "PAYMENT_STATUS_UPDATED",
+      collection: "payments",
+      recordId: id,
+      userId: result.ownerId?.toString(),
+      userEmail: session.user.email,
+      changes: {
+        status: { before: existingPayment?.status, after: body.status }
+      },
+      metadata: {
+        adminEmail: session.user.email,
+        paymentAmount: result.amountInNumbers || result.amount,
+        transactionId: result.transactionId,
+        previousStatus: existingPayment?.status,
+        newStatus: body.status,
+      },
+    });
 
     // Update user's paymentDone status if payment is verified
     if (body.status === "verified" && result.userId) {
