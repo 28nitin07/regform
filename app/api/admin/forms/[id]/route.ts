@@ -94,8 +94,10 @@ export async function PATCH(
 
     // Trigger incremental Google Sheets sync (non-blocking)
     try {
+      const baseUrl = process.env.NEXTAUTH_URL || process.env.ROOT_URL || 'http://localhost:3000';
+      
       // Sync only this specific form record
-      fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/sync/incremental`, {
+      fetch(`${baseUrl}/api/sync/incremental`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
@@ -104,6 +106,12 @@ export async function PATCH(
           sheetName: "Registrations"
         }),
       }).catch(err => console.error("Background sync failed:", err));
+
+      // Also trigger due payments sync to update outstanding amounts
+      fetch(`${baseUrl}/api/sync/due-payments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      }).catch(err => console.error("Due payments sync failed:", err));
     } catch (error) {
       console.error("Error triggering sync:", error);
     }

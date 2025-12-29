@@ -74,12 +74,36 @@ interface Payment {
   updatedAt?: string;
 }
 
+interface DuePayment {
+  _id: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  universityName: string;
+  paymentId: string;
+  transactionId: string;
+  originalPlayerCount: number;
+  currentPlayerCount: number;
+  playerDifference: number;
+  amountDue: number;
+  status: string;
+  lastUpdated: string;
+  forms: Array<{
+    formId: string;
+    sport: string;
+    originalPlayers: number;
+    currentPlayers: number;
+    difference: number;
+  }>;
+}
+
 export default function AdminDashboard() {
   const { data: session } = useSession();
   const { theme, toggleTheme } = useTheme();
   const [users, setUsers] = useState<User[]>([]);
   const [forms, setForms] = useState<Form[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
+  const [duePayments, setDuePayments] = useState<DuePayment[]>([]);
   const [loading, setLoading] = useState(true);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
@@ -89,6 +113,7 @@ export default function AdminDashboard() {
   const [userSearchQuery, setUserSearchQuery] = useState("");
   const [formSearchQuery, setFormSearchQuery] = useState("");
   const [paymentSearchQuery, setPaymentSearchQuery] = useState("");
+  const [duePaymentSearchQuery, setDuePaymentSearchQuery] = useState("");
   const [showDeletedUsers, setShowDeletedUsers] = useState(false);
 
   const fetchData = async (showLoading = false) => {
@@ -96,10 +121,11 @@ export default function AdminDashboard() {
       setLoading(true);
     }
     try {
-      const [usersRes, formsRes, paymentsRes] = await Promise.all([
+      const [usersRes, formsRes, paymentsRes, duePaymentsRes] = await Promise.all([
         fetch("/api/admin/registrations"),
         fetch("/api/admin/forms"),
         fetch("/api/admin/payments"),
+        fetch("/api/admin/due-payments"),
       ]);
 
       if (usersRes.ok) {
@@ -115,6 +141,11 @@ export default function AdminDashboard() {
       if (paymentsRes.ok) {
         const paymentsData = await paymentsRes.json();
         setPayments(paymentsData.data || []);
+      }
+
+      if (duePaymentsRes.ok) {
+        const duePaymentsData = await duePaymentsRes.json();
+        setDuePayments(duePaymentsData.data || []);
       }
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -196,12 +227,33 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleSyncDuePayments = async () => {
+    try {
+      const response = await fetch("/api/sync/due-payments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        alert(`✅ Successfully synced ${result.count} due payment records to Google Sheets!`);
+      } else {
+        alert("❌ Failed to sync due payments to Google Sheets");
+      }
+    } catch (error) {
+      console.error("Error syncing due payments:", error);
+      alert("❌ Error syncing due payments to Google Sheets");
+    }
+  };
+
   const stats = {
     totalUsersVerified: users.filter((u) => !u.deleted && u.emailVerified).length,
     registered: users.filter((u) => !u.deleted && u.registrationDone).length,
     paidUnverified: payments.filter((p) => p.status !== "verified").length,
     totalForms: forms.length,
     verifiedPayments: payments.filter((p) => p.status === "verified").length,
+    duePaymentsCount: duePayments.length,
+    totalAmountDue: duePayments.reduce((sum, dp) => sum + dp.amountDue, 0),
   };
 
   // Filter users based on search query and deleted status
@@ -243,6 +295,19 @@ export default function AdminDashboard() {
       payment.transactionId?.toLowerCase().includes(searchLower) ||
       payment.status.toLowerCase().includes(searchLower) ||
       payment._id.toLowerCase().includes(searchLower)
+    );
+  });
+
+  // Filter due payments based on search query
+  const filteredDuePayments = duePayments.filter((duePayment) => {
+    const searchLower = duePaymentSearchQuery.toLowerCase();
+    return (
+      duePayment.userName.toLowerCase().includes(searchLower) ||
+      duePayment.userEmail.toLowerCase().includes(searchLower) ||
+      duePayment.universityName.toLowerCase().includes(searchLower) ||
+      duePayment.transactionId.toLowerCase().includes(searchLower) ||
+      duePayment._id.toLowerCase().includes(searchLower) ||
+      duePayment.forms.some(f => f.sport.toLowerCase().includes(searchLower))
     );
   });
 
@@ -355,6 +420,15 @@ export default function AdminDashboard() {
               <TabsTrigger value="payments">
                 <CreditCard className="h-4 w-4 mr-2" />
                 Payments
+              </TabsTrigger>
+              <TabsTrigger value="due-payments" className="relative">
+                <CreditCard className="h-4 w-4 mr-2" />
+                Due Payments
+                {stats.duePaymentsCount > 0 && (
+                  <span className="ml-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
+                    {stats.duePaymentsCount}
+                  </span>
+                )}
               </TabsTrigger>
             </TabsList>
             <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
@@ -720,6 +794,142 @@ export default function AdminDashboard() {
                         ))}
                       </TableBody>
                     </Table>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Due Payments Tab */}
+          <TabsContent value="due-payments">
+            <Card className="dark:bg-gray-800 dark:border-gray-700">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="dark:text-white">Due Payments</CardTitle>
+                    <CardDescription className="dark:text-gray-400">
+                      Track outstanding payments from player count changes (₹800 per additional player)
+                    </CardDescription>
+                  </div>
+                  <Button
+                    onClick={handleSyncDuePayments}
+                    variant="outline"
+                    size="sm"
+                    className="dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+                  >
+                    <RotateCcw className="h-4 w-4 mr-2" />
+                    Sync to Sheets
+                  </Button>
+                </div>
+                {/* Search Bar */}
+                <div className="mt-4 relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    type="text"
+                    placeholder="Search by name, email, university, transaction ID, sport, or ID..."
+                    value={duePaymentSearchQuery}
+                    onChange={(e) => setDuePaymentSearchQuery(e.target.value)}
+                    className="pl-10 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                  />
+                </div>
+                {stats.duePaymentsCount > 0 && (
+                  <div className="mt-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-semibold text-yellow-900 dark:text-yellow-200">
+                          Total Due Payments: {stats.duePaymentsCount}
+                        </p>
+                        <p className="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
+                          Total Amount Due: ₹{stats.totalAmountDue.toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <div className="flex justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-white"></div>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    {filteredDuePayments.length === 0 ? (
+                      <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                        {duePayments.length === 0 ? (
+                          <div>
+                            <p className="text-lg font-semibold mb-2">✅ No Due Payments</p>
+                            <p className="text-sm">All registrations are fully paid!</p>
+                          </div>
+                        ) : (
+                          "No due payments found matching your search."
+                        )}
+                      </div>
+                    ) : (
+                      <Table>
+                        <TableHeader>
+                          <TableRow className="dark:border-gray-700">
+                            <TableHead className="dark:text-gray-300">User Name</TableHead>
+                            <TableHead className="dark:text-gray-300">Email</TableHead>
+                            <TableHead className="dark:text-gray-300">University</TableHead>
+                            <TableHead className="dark:text-gray-300">Transaction ID</TableHead>
+                            <TableHead className="dark:text-gray-300">Sports Modified</TableHead>
+                            <TableHead className="dark:text-gray-300">Original Players</TableHead>
+                            <TableHead className="dark:text-gray-300">Current Players</TableHead>
+                            <TableHead className="dark:text-gray-300">Additional Players</TableHead>
+                            <TableHead className="dark:text-gray-300">Amount Due</TableHead>
+                            <TableHead className="dark:text-gray-300">Last Updated</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {filteredDuePayments.map((duePayment) => (
+                            <TableRow key={duePayment._id} className="dark:border-gray-700">
+                              <TableCell className="font-medium dark:text-white">
+                                {duePayment.userName}
+                              </TableCell>
+                              <TableCell className="dark:text-gray-300">{duePayment.userEmail}</TableCell>
+                              <TableCell className="max-w-xs truncate dark:text-gray-300">
+                                {duePayment.universityName}
+                              </TableCell>
+                              <TableCell className="dark:text-gray-300">
+                                {duePayment.transactionId}
+                              </TableCell>
+                              <TableCell className="dark:text-gray-300">
+                                <div className="space-y-1">
+                                  {duePayment.forms.map((form, idx) => (
+                                    <div key={idx} className="text-xs">
+                                      <span className="font-medium">{form.sport}:</span>{" "}
+                                      <span className={form.difference > 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}>
+                                        {form.difference > 0 ? "+" : ""}{form.difference}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </TableCell>
+                              <TableCell className="dark:text-gray-300">
+                                {duePayment.originalPlayerCount}
+                              </TableCell>
+                              <TableCell className="dark:text-gray-300">
+                                {duePayment.currentPlayerCount}
+                              </TableCell>
+                              <TableCell>
+                                <Badge variant="default" className="bg-orange-500">
+                                  +{duePayment.playerDifference}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="dark:text-gray-300">
+                                <span className="font-bold text-red-600 dark:text-red-400">
+                                  ₹{duePayment.amountDue.toLocaleString()}
+                                </span>
+                              </TableCell>
+                              <TableCell className="dark:text-gray-300">
+                                {new Date(duePayment.lastUpdated).toLocaleString()}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
                     )}
                   </div>
                 )}
