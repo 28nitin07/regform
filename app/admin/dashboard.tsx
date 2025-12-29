@@ -1078,16 +1078,52 @@ export default function AdminDashboard() {
                                 <summary className="cursor-pointer text-blue-600 dark:text-blue-400 hover:underline">
                                   View Changes
                                 </summary>
-                                <pre className="mt-2 p-2 bg-gray-50 dark:bg-gray-800 rounded text-xs overflow-auto max-w-md">
-                                  {JSON.stringify(
-                                    {
-                                      changes: log.changes,
-                                      metadata: log.metadata,
-                                    },
-                                    null,
-                                    2
+                                <div className="mt-2 p-3 bg-gray-50 dark:bg-gray-800 rounded space-y-2 max-w-md">
+                                  {log.changes && Object.keys(log.changes).length > 0 ? (
+                                    Object.entries(log.changes).map(([field, change]: [string, any]) => (
+                                      <div key={field} className="border-b border-gray-200 dark:border-gray-700 pb-2 last:border-0">
+                                        <div className="font-semibold text-gray-700 dark:text-gray-300 mb-1 capitalize">
+                                          {field.replace(/_/g, " ").replace(/([A-Z])/g, " $1").trim()}:
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-2 text-xs">
+                                          <div>
+                                            <span className="text-gray-500 dark:text-gray-400">Before:</span>
+                                            <div className="mt-1 p-2 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded">
+                                              {change.before === null || change.before === undefined 
+                                                ? "(empty)" 
+                                                : typeof change.before === "object"
+                                                ? JSON.stringify(change.before, null, 2)
+                                                : String(change.before)}
+                                            </div>
+                                          </div>
+                                          <div>
+                                            <span className="text-gray-500 dark:text-gray-400">After:</span>
+                                            <div className="mt-1 p-2 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded">
+                                              {change.after === null || change.after === undefined 
+                                                ? "(empty)" 
+                                                : typeof change.after === "object"
+                                                ? JSON.stringify(change.after, null, 2)
+                                                : String(change.after)}
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    ))
+                                  ) : (
+                                    <div className="text-gray-500 dark:text-gray-400">No field changes recorded</div>
                                   )}
-                                </pre>
+                                  {log.metadata && Object.keys(log.metadata).length > 0 && (
+                                    <div className="pt-2 mt-2 border-t border-gray-200 dark:border-gray-700">
+                                      <div className="font-semibold text-gray-700 dark:text-gray-300 mb-2">Additional Info:</div>
+                                      {Object.entries(log.metadata).map(([key, value]: [string, any]) => (
+                                        <div key={key} className="text-xs text-gray-600 dark:text-gray-400">
+                                          <span className="font-medium capitalize">{key.replace(/_/g, " ")}:</span>{" "}
+                                          {typeof value === "object" ? JSON.stringify(value) : String(value)}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
                               </details>
                             </TableCell>
                           </TableRow>
