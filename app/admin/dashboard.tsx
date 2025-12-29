@@ -139,6 +139,7 @@ export default function AdminDashboard() {
     
     // Cleanup interval on unmount
     return () => clearInterval(interval);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleDeleteUser = async (userId: string) => {

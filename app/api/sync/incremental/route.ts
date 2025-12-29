@@ -10,8 +10,9 @@ import { ObjectId } from "mongodb";
  * Only updates/appends the specific record that changed
  */
 export async function POST(req: NextRequest) {
+  let body: { collection?: string; recordId?: string; sheetName?: string } = {};
   try {
-    const body = await req.json();
+    body = await req.json();
     const { collection, recordId, sheetName } = body;
 
     console.log(`📊 Incremental sync requested: collection=${collection}, recordId=${recordId}, sheetName=${sheetName}`);
