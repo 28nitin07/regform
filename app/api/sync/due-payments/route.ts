@@ -104,23 +104,35 @@ export async function POST(req: NextRequest) {
     }
 
     // Authenticate with Google Sheets API
-    const auth = new google.auth.GoogleAuth({
-      credentials: {
-        client_email: process.env.GOOGLE_CLIENT_EMAIL,
-        private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-      },
-      scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-    });
-
-    const sheets = google.sheets({ version: 'v4', auth });
+    const clientEmail = process.env.GOOGLE_CLIENT_EMAIL;
+    const privateKey = process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n');
     const spreadsheetId = process.env.GOOGLE_SHEET_ID;
 
+    if (!clientEmail || !privateKey) {
+      console.error("❌ Missing Google credentials: GOOGLE_CLIENT_EMAIL or GOOGLE_PRIVATE_KEY");
+      return NextResponse.json(
+        { success: false, message: "Google Sheets credentials not configured" },
+        { status: 500 }
+      );
+    }
+
     if (!spreadsheetId) {
+      console.error("❌ Missing GOOGLE_SHEET_ID");
       return NextResponse.json(
         { success: false, message: "Google Sheet ID not configured" },
         { status: 500 }
       );
     }
+
+    const auth = new google.auth.GoogleAuth({
+      credentials: {
+        client_email: clientEmail,
+        private_key: privateKey,
+      },
+      scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+    });
+
+    const sheets = google.sheets({ version: 'v4', auth });
 
     const sheetName = "Due Payments";
 
