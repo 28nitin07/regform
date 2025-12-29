@@ -135,10 +135,10 @@ export async function POST(req: NextRequest) {
       searchValue = recordId.toString();
     }
 
-    // Get existing sheet data to find the row
+    // Get ALL sheet data to find the row more reliably
     const existingData = await sheets.spreadsheets.values.get({
       spreadsheetId,
-      range: `${finalSheetName}!${searchColumn}:${searchColumn}`, // Get search column
+      range: `${finalSheetName}!A:Z`,
     });
 
     const rows = existingData.data.values || [];
@@ -148,24 +148,37 @@ export async function POST(req: NextRequest) {
     
     if (collection === "form") {
       // For forms, need to match BOTH email (column D) AND sport (column A)
-      // Get all rows to compare both columns
-      const allRowsResponse = await sheets.spreadsheets.values.get({
-        spreadsheetId,
-        range: `${finalSheetName}!A:D`,
-      });
-      const allRows = allRowsResponse.data.values || [];
       const formTitle = String(document.title || "");
       
-      for (let i = 1; i < allRows.length; i++) {
-        const rowSport = allRows[i][0] || ""; // Column A: Sport/Event
-        const rowEmail = allRows[i][3] || ""; // Column D: User Email
+      for (let i = 1; i < rows.length; i++) {
+        const rowSport = rows[i][0] || ""; // Column A: Sport/Event
+        const rowEmail = rows[i][3] || ""; // Column D: User Email
         if (rowEmail === searchValue && rowSport === formTitle) {
           rowIndex = i;
           break;
         }
       }
+    } else if (collection === "payments") {
+      // For payments, match on Payment ID in column D (index 3)
+      for (let i = 1; i < rows.length; i++) {
+        const rowPaymentId = rows[i][3] || ""; // Column D: Payment ID
+        if (rowPaymentId === searchValue) {
+          rowIndex = i;
+          console.log(`✅ Found existing payment at row ${i + 1}: ${rowPaymentId}`);
+          break;
+        }
+      }
+    } else if (collection === "users") {
+      // For users, match on Email in column B (index 1)
+      for (let i = 1; i < rows.length; i++) {
+        const rowEmail = rows[i][1] || ""; // Column B: Email
+        if (rowEmail === searchValue) {
+          rowIndex = i;
+          break;
+        }
+      }
     } else {
-      // For other collections, simple match on search value
+      // For other collections, match on first column
       for (let i = 1; i < rows.length; i++) {
         if (rows[i][0] === searchValue) {
           rowIndex = i;
