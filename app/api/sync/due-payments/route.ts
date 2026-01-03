@@ -30,14 +30,14 @@ interface DuePaymentRecord {
 /**
  * POST /api/sync/due-payments
  * 
- * Syncs due payments data to Google Sheets "Due Payments" tab
+ * Syncs extra payments data to Google Sheets "Extra Payments" tab
  * Includes unpaid, unverified, pending, and overpaid records
  */
 export async function POST(req: NextRequest) {
   try {
-    console.log("📊 Syncing due payments to Google Sheets...");
+    console.log("📊 Syncing extra payments to Google Sheets...");
 
-    // Calculate due payments directly from database
+    // Calculate extra payments directly from database
     const { db } = await connectToDatabase();
     const paymentsCollection = db.collection("payments");
     const formsCollection = db.collection("form");
@@ -214,11 +214,11 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    console.log(`📊 Found ${duePayments.length} due payment records to sync`);
+    console.log(`📊 Found ${duePayments.length} extra payment records to sync`);
 
     const duePaymentsData: unknown[][] = [];
 
-    // Format all due payments for Google Sheets
+    // Format all extra payments for Google Sheets
     for (const duePayment of duePayments) {
       const currentDate = new Date();
       const date = currentDate.toLocaleDateString('en-IN', { 
@@ -286,7 +286,7 @@ export async function POST(req: NextRequest) {
     });
 
     const sheets = google.sheets({ version: 'v4', auth });
-    const sheetName = "Due Payments";
+    const sheetName = "Extra Payments";
 
     // Check if sheet exists, create if not
     try {

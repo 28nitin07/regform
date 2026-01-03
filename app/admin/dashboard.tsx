@@ -262,11 +262,11 @@ export default function AdminDashboard() {
         const result = await response.json();
         alert(`✅ Successfully synced ${result.count} due payment records to Google Sheets!`);
       } else {
-        alert("❌ Failed to sync due payments to Google Sheets");
+        alert("❌ Failed to sync extra payments to Google Sheets");
       }
     } catch (error) {
-      console.error("Error syncing due payments:", error);
-      alert("❌ Error syncing due payments to Google Sheets");
+      console.error("Error syncing extra payments:", error);
+      alert("❌ Error syncing extra payments to Google Sheets");
     }
   };
 
@@ -450,7 +450,7 @@ export default function AdminDashboard() {
               </TabsTrigger>
               <TabsTrigger value="due-payments" className="relative">
                 <CreditCard className="h-4 w-4 mr-2" />
-                Due Payments
+                Extra Payments
                 {(stats.duePaymentsCount > 0 || stats.overpaidCount > 0) && (
                   <span className="ml-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
                     {stats.duePaymentsCount + stats.overpaidCount}
@@ -832,11 +832,11 @@ export default function AdminDashboard() {
             </Card>
           </TabsContent>
 
-          {/* Due Payments Tab */}
+          {/* Extra Payments Tab */}
           <TabsContent value="due-payments">
             <Card className="dark:bg-gray-800 dark:border-gray-700">
               <CardHeader>
-                <CardTitle className="dark:text-white">Due Payments</CardTitle>
+                <CardTitle className="dark:text-white">Extra Payments</CardTitle>
                 <CardDescription className="dark:text-gray-400">
                   Track unpaid registrations and outstanding payments from player changes (₹800 per player)
                 </CardDescription>
@@ -897,11 +897,11 @@ export default function AdminDashboard() {
                       <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                         {duePayments.length === 0 ? (
                           <div>
-                            <p className="text-lg font-semibold mb-2">✅ No Due Payments</p>
+                            <p className="text-lg font-semibold mb-2">✅ No Extra Payments</p>
                             <p className="text-sm">All registrations are fully paid!</p>
                           </div>
                         ) : (
-                          "No due payments found matching your search."
+                          "No extra payments found matching your search."
                         )}
                       </div>
                     ) : (
