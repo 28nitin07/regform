@@ -287,15 +287,43 @@ export async function POST(req: NextRequest) {
 
     const sheets = google.sheets({ version: 'v4', auth });
     const sheetName = "Extra Payments";
+    const oldSheetName = "Due Payments";
 
-    // Check if sheet exists, create if not
+    // Check if sheets exist and handle renaming
     try {
       const sheetMetadata = await sheets.spreadsheets.get({ spreadsheetId });
-      const sheetExists = sheetMetadata.data.sheets?.some(
+      const existingSheets = sheetMetadata.data.sheets || [];
+      
+      const extraPaymentsSheet = existingSheets.find(
         sheet => sheet.properties?.title === sheetName
       );
+      
+      const duePaymentsSheet = existingSheets.find(
+        sheet => sheet.properties?.title === oldSheetName
+      );
 
-      if (!sheetExists) {
+      // If old "Due Payments" tab exists, rename it to "Extra Payments"
+      if (duePaymentsSheet && !extraPaymentsSheet) {
+        console.log(`📝 Renaming "${oldSheetName}" tab to "${sheetName}"...`);
+        await sheets.spreadsheets.batchUpdate({
+          spreadsheetId,
+          requestBody: {
+            requests: [{
+              updateSheetProperties: {
+                properties: {
+                  sheetId: duePaymentsSheet.properties?.sheetId,
+                  title: sheetName
+                },
+                fields: 'title'
+              }
+            }]
+          }
+        });
+        console.log(`✅ Successfully renamed tab to "${sheetName}"`);
+      }
+      // If neither exists, create new "Extra Payments" tab
+      else if (!extraPaymentsSheet && !duePaymentsSheet) {
+        console.log(`📝 Creating new "${sheetName}" tab...`);
         await sheets.spreadsheets.batchUpdate({
           spreadsheetId,
           requestBody: {
