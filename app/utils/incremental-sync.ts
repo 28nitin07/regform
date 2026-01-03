@@ -210,6 +210,16 @@ export async function syncRecordToSheet(
       // Update existing row (rowIndex is 0-based, row 0 is header, so rowIndex 1 = row 2 in sheet)
       const sheetRowNumber = rowIndex + 1;
       console.log(`🔄 Updating existing row ${sheetRowNumber} in ${targetSheet}`);
+      
+      // For Finance sheet, preserve Status (column N) and Send Email (column O) values
+      if (collection === "payments" && allRows[rowIndex]) {
+        const existingRow = allRows[rowIndex];
+        // Column N is index 13, Column O is index 14
+        if (existingRow[13]) rowData[13] = existingRow[13]; // Preserve Status
+        if (existingRow[14]) rowData[14] = existingRow[14]; // Preserve Send Email?
+        console.log(`🔒 Preserving existing Status: "${existingRow[13]}" and Send Email: "${existingRow[14]}"`);
+      }
+      
       await sheets.spreadsheets.values.update({
         spreadsheetId,
         range: `${targetSheet}!A${sheetRowNumber}:Z${sheetRowNumber}`,

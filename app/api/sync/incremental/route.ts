@@ -279,6 +279,16 @@ export async function POST(req: NextRequest) {
       // Record exists - update the row
       const rowNumber = rowIndex + 1; // 1-indexed
       console.log(`🔄 Updating existing row ${rowNumber} in sheet: ${finalSheetName}`);
+      
+      // For Finance sheet, preserve Status (column N) and Send Email (column O) values
+      if (collection === "payments" && rows[rowIndex]) {
+        const existingRow = rows[rowIndex];
+        // Column N is index 13, Column O is index 14
+        if (existingRow[13]) formattedRow[13] = existingRow[13]; // Preserve Status
+        if (existingRow[14]) formattedRow[14] = existingRow[14]; // Preserve Send Email?
+        console.log(`🔒 Preserving existing Status: "${existingRow[13]}" and Send Email: "${existingRow[14]}"`);
+      }
+      
       await sheets.spreadsheets.values.update({
         spreadsheetId,
         range: `${finalSheetName}!A${rowNumber}:Z${rowNumber}`,

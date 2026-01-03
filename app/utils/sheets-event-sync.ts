@@ -493,6 +493,21 @@ async function updateOrAppendToSheet(sheetName: string, id: string, row: string[
       const existingRowIndex = await findRowByIdInSheet(sheetName, id, additionalSearchData);
 
       if (existingRowIndex !== null) {
+        // For Finance sheet, preserve Status (column N) and Send Email (column O) values
+        if (sheetName === "**Finance (Do Not Open)**") {
+          const existingData = await sheets.spreadsheets.values.get({
+            spreadsheetId,
+            range: `${sheetName}!A${existingRowIndex}:Z${existingRowIndex}`,
+          });
+          const existingRow = existingData.data.values?.[0];
+          if (existingRow) {
+            // Column N is index 13, Column O is index 14
+            if (existingRow[13]) row[13] = existingRow[13]; // Preserve Status
+            if (existingRow[14]) row[14] = existingRow[14]; // Preserve Send Email?
+            console.log(`[Sheets] 🔒 Preserving existing Status: "${existingRow[13]}" and Send Email: "${existingRow[14]}"`);
+          }
+        }
+        
         // Update existing row
         const range = `${sheetName}!A${existingRowIndex}:Z${existingRowIndex}`;
         await sheets.spreadsheets.values.update({
