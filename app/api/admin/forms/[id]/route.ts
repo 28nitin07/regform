@@ -290,12 +290,6 @@ export async function PATCH(
         `${baseUrl}/api/sync/incremental`,
         { collection: "form", recordId: id, sheetName: "Registrations" }
       ).catch(err => console.error("Background sync failed:", err));
-
-      // Sync extra payments with retry
-      syncWithRetry(
-        `${baseUrl}/api/sync/extra-payments`,
-        {}
-      ).catch(err => console.error("Extra payments sync failed:", err));
     } catch (error) {
       console.error("Error triggering sync:", error);
     }
