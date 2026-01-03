@@ -257,8 +257,8 @@ export async function POST(req: NextRequest) {
     }
 
     // Authenticate with Google Sheets API
-    const clientEmail = process.env.GOOGLE_CLIENT_EMAIL;
-    const privateKey = process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n');
+    const clientEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || process.env.GOOGLE_CLIENT_EMAIL;
+    const privateKey = (process.env.GOOGLE_PRIVATE_KEY || "").replace(/\\n/g, '\n');
     const spreadsheetId = process.env.GOOGLE_SHEET_ID;
 
     if (!clientEmail || !privateKey) {
