@@ -45,13 +45,20 @@ if [ -f .env.backup ]; then
     echo -e "${GREEN}✅ Environment restored${NC}"
 fi
 
+# Stop PM2 process during build to avoid conflicts
+echo -e "${YELLOW}🛑 Stopping PM2 process...${NC}"
+if pm2 describe regform &>/dev/null; then
+    pm2 stop regform
+    echo -e "${GREEN}✅ PM2 process stopped${NC}"
+fi
+
 # Clean build artifacts
 echo -e "${YELLOW}🧹 Cleaning build artifacts...${NC}"
 rm -rf .next
 
-# Install dependencies
+# Install dependencies (including devDependencies for build)
 echo -e "${YELLOW}📦 Installing dependencies...${NC}"
-npm ci --production
+npm ci
 
 if [ $? -ne 0 ]; then
     echo -e "${RED}❌ npm install failed${NC}"
@@ -67,10 +74,20 @@ if [ $? -ne 0 ]; then
     echo -e "${RED}❌ Build failed${NC}"
     exit 1
 fi
-echo -e "${GREEN}✅ Build completed${NC}"
+
+# Verify build output exists
+if [ ! -d ".next" ]; then
+    echo -e "${RED}❌ Build directory .next not found${NC}"
+    exit 1
+fi
+echo -e "${GREEN}✅ Build completed successfully${NC}"
+
+# Remove devDependencies to save space (optional)
+# echo -e "${YELLOW}🧹 Removing dev dependencies...${NC}"
+# npm prune --production
 
 # Restart application with PM2
-echo -e "${YELLOW}🔄 Restarting application...${NC}"
+echo -e "${YELLOW}🔄 Starting application...${NC}"
 
 # Check if PM2 is installed
 if ! command -v pm2 &> /dev/null; then
@@ -78,18 +95,31 @@ if ! command -v pm2 &> /dev/null; then
     npm install -g pm2
 fi
 
-# Start or restart with PM2
+# Delete old process and start fresh
 if pm2 describe regform &>/dev/null; then
-    pm2 restart regform
-else
-    pm2 start npm --name regform -- start
+    echo -e "${YELLOW}Deleting old PM2 process...${NC}"
+    pm2 delete regform
 fi
 
+# Start with PM2
+echo -e "${YELLOW}Starting new PM2 process...${NC}"
+pm2 start npm --name regform -- start
+
 if [ $? -ne 0 ]; then
-    echo -e "${RED}❌ Application restart failed${NC}"
+    echo -e "${RED}❌ Application start failed${NC}"
     exit 1
 fi
-echo -e "${GREEN}✅ Application restarted${NC}"
+echo -e "${GREEN}✅ Application started${NC}"
+
+# Wait a few seconds for the app to start
+sleep 3
+
+# Check if the app is actually running
+if ! pm2 describe regform &>/dev/null || ! pm2 describe regform | grep -q "online"; then
+    echo -e "${RED}❌ Application is not running properly${NC}"
+    pm2 logs regform --lines 50 --nostream
+    exit 1
+fi
 
 # Save PM2 process list
 pm2 save
