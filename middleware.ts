@@ -13,16 +13,23 @@ function getJwtSecret(): string {
 }
 
 export async function middleware(req: NextRequest) {
-  // Apply rate limiting to API routes
+  // Apply rate limiting to API routes, but exclude admin/sync endpoints
   if (req.nextUrl.pathname.startsWith("/api/")) {
-    const rateLimitResult = rateLimit(req, {
-      windowMs: 60000, // 1 minute
-      maxRequests: 100,
-      message: "Too many requests from this IP, please try again later."
-    });
+    // Exclude admin and sync endpoints from rate limiting
+    const isAdminApi = req.nextUrl.pathname.startsWith("/api/admin");
+    const isSyncApi = req.nextUrl.pathname.startsWith("/api/sync");
+    const isHealthApi = req.nextUrl.pathname.startsWith("/api/health");
     
-    if (rateLimitResult) {
-      return addSecurityHeaders(rateLimitResult);
+    if (!isAdminApi && !isSyncApi && !isHealthApi) {
+      const rateLimitResult = rateLimit(req, {
+        windowMs: 60000, // 1 minute
+        maxRequests: 100,
+        message: "Too many requests from this IP, please try again later."
+      });
+      
+      if (rateLimitResult) {
+        return addSecurityHeaders(rateLimitResult);
+      }
     }
   }
 
