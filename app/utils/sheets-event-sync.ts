@@ -957,7 +957,7 @@ export async function initialFullSync(): Promise<InitialSyncResult> {
     if (payments.length > 0) {
       // First, get existing Status and Send Email values from the Finance sheet
       console.log("[Sheets] Fetching existing Status and Send Email values...");
-      let existingStatusMap = new Map<string, { status: string; sendEmail: string }>();
+      const existingStatusMap = new Map<string, { status: string; sendEmail: string }>();
       try {
         const existingData = await sheets.spreadsheets.values.get({
           spreadsheetId,
