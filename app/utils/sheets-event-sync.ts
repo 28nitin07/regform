@@ -955,6 +955,33 @@ export async function initialFullSync(): Promise<InitialSyncResult> {
     console.log("[Sheets] Syncing payments...");
     const payments = await db.collection("payments").find({}).toArray();
     if (payments.length > 0) {
+      // First, get existing Status and Send Email values from the Finance sheet
+      console.log("[Sheets] Fetching existing Status and Send Email values...");
+      let existingStatusMap = new Map<string, { status: string; sendEmail: string }>();
+      try {
+        const existingData = await sheets.spreadsheets.values.get({
+          spreadsheetId,
+          range: `${SHEET_CONFIGS.payments.name}!D:O`, // Payment ID (D), Status (N), Send Email (O)
+        });
+        const existingRows = existingData.data.values;
+        if (existingRows && existingRows.length > 1) { // Skip header row
+          for (let i = 1; i < existingRows.length; i++) {
+            const paymentId = existingRows[i][0]; // Column D (index 0 in range D:O)
+            const status = existingRows[i][10]; // Column N (index 10 in range D:O)
+            const sendEmail = existingRows[i][11]; // Column O (index 11 in range D:O)
+            if (paymentId && (status || sendEmail)) {
+              existingStatusMap.set(paymentId, {
+                status: status || "Not Started",
+                sendEmail: sendEmail || "No"
+              });
+            }
+          }
+          console.log(`[Sheets] 🔒 Found ${existingStatusMap.size} existing Status/Send Email values to preserve`);
+        }
+      } catch (error) {
+        console.warn("[Sheets] Could not fetch existing Status/Send Email values (they will default to 'Not Started' and 'No'):", error);
+      }
+      
       // Fetch all users for contact info
       const ownerIds = payments.map(p => p.ownerId).filter(Boolean);
       const paymentOwners = await db.collection("users").find({ _id: { $in: ownerIds } }).toArray();
@@ -1004,11 +1031,17 @@ export async function initialFullSync(): Promise<InitialSyncResult> {
           hour12: true
         });
         
+        // Get existing Status and Send Email values if they exist, otherwise use defaults
+        const paymentId = doc._id.toString();
+        const existingValues = existingStatusMap.get(paymentId);
+        const status = existingValues?.status || "Not Started";
+        const sendEmail = existingValues?.sendEmail || "No";
+        
         return [
           date,
           time,
           String(doc.transactionId || ""),
-          doc._id.toString(),
+          paymentId,
           String(doc.amountInNumbers || ""),
           String(doc.payeeName || ""),
           owner ? String(owner.universityName || "") : "",
@@ -1018,8 +1051,8 @@ export async function initialFullSync(): Promise<InitialSyncResult> {
           owner ? String(owner.phone || "") : "",
           owner ? String(owner.email || "") : "",
           doc.paymentProof ? `${process.env.ROOT_URL || ""}api/payments/proof/${doc.paymentProof}` : "",
-          "Not Started",
-          "No"
+          status,
+          sendEmail
         ];
       });
 
@@ -1037,7 +1070,8 @@ export async function initialFullSync(): Promise<InitialSyncResult> {
         },
       });
 
-      console.log(`[Sheets] ✅ Synced ${payments.length} payments`);
+      const preservedCount = Array.from(existingStatusMap.values()).filter(v => v.status !== "Not Started" || v.sendEmail !== "No").length;
+      console.log(`[Sheets] ✅ Synced ${payments.length} payments (preserved ${preservedCount} existing Status/Send Email values)`);
     }
 
     // Format all sheets (headers, borders, colors)
