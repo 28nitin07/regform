@@ -32,7 +32,7 @@ export async function GET() {
     const serviceEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
     const hasPrivateKey = !!process.env.GOOGLE_PRIVATE_KEY;
 
-    const result: any = {
+    const result: Record<string, unknown> = {
       environment: process.env.NODE_ENV,
       timestamp: new Date().toISOString(),
       config: {
@@ -88,14 +88,15 @@ export async function GET() {
         });
 
         result.tests.sheetAccess.success = true;
-        result.tests.sheetAccess.sheets = response.data.sheets?.map((s: any) => ({
+        result.tests.sheetAccess.sheets = response.data.sheets?.map((s: { properties?: { title?: string; sheetId?: number } }) => ({
           title: s.properties?.title,
           id: s.properties?.sheetId
         })) || [];
-      } catch (error: any) {
-        result.tests.sheetAccess.error = error?.message || String(error);
-        if (error?.code) {
-          result.tests.sheetAccess.errorCode = error.code;
+      } catch (error: unknown) {
+        const err = error as { message?: string; code?: unknown };
+        result.tests.sheetAccess.error = err?.message || String(error);
+        if (err?.code) {
+          result.tests.sheetAccess.errorCode = err.code;
         }
       }
     }
@@ -123,10 +124,11 @@ export async function GET() {
         result.tests.writeTest.success = true;
         result.tests.writeTest.message = "Read access confirmed";
         result.tests.writeTest.sampleData = readResponse.data.values;
-      } catch (error: any) {
-        result.tests.writeTest.error = error?.message || String(error);
-        if (error?.code) {
-          result.tests.writeTest.errorCode = error.code;
+      } catch (error: unknown) {
+        const err = error as { message?: string; code?: unknown };
+        result.tests.writeTest.error = err?.message || String(error);
+        if (err?.code) {
+          result.tests.writeTest.errorCode = err.code;
         }
       }
     }

@@ -12,9 +12,8 @@ export async function syncRecordToSheet(
   sheetName?: string
 ): Promise<{ success: boolean; message: string }> {
   try {
-    const spreadsheetId = process.env.GOOGLE_SHEET_ID;
     console.log(`📊 Direct sync: collection=${collection}, recordId=${recordId}, sheetName=${sheetName}`);
-    console.log(`📋 Using Google Sheet ID: ${spreadsheetId?.substring(0, 15)}...`);
+    console.log(`📋 Using Google Sheet ID: ${process.env.GOOGLE_SHEET_ID?.substring(0, 15)}...`);
 
     // Connect to MongoDB and fetch the specific record
     const { db } = await connectToDatabase();
@@ -263,7 +262,7 @@ export async function syncRecordToSheet(
     
     // Log specific Google API errors
     if (error && typeof error === 'object' && 'code' in error) {
-      console.error(`🔴 Google Sheets API Error Code: ${(error as any).code}`);
+      console.error(`🔴 Google Sheets API Error Code: ${(error as { code: unknown }).code}`);
     }
     
     return { success: false, message: `Sync failed: ${errorMessage}` };
