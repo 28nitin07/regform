@@ -32,7 +32,7 @@ export async function GET() {
     const serviceEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
     const hasPrivateKey = !!process.env.GOOGLE_PRIVATE_KEY;
 
-    const result: Record<string, unknown> = {
+    const result = {
       environment: process.env.NODE_ENV,
       timestamp: new Date().toISOString(),
       config: {
@@ -44,9 +44,9 @@ export async function GET() {
         syncEnabled: process.env.SHEETS_SYNC_ENABLED,
       },
       tests: {
-        auth: { success: false, error: null },
-        sheetAccess: { success: false, error: null, sheets: [] },
-        writeTest: { success: false, error: null },
+        auth: { success: false, error: null as string | null },
+        sheetAccess: { success: false, error: null as string | null, sheets: [] as Array<{ title?: string; id?: number }>, errorCode: undefined as unknown },
+        writeTest: { success: false, error: null as string | null, message: undefined as string | undefined, sampleData: undefined as unknown, errorCode: undefined as unknown },
       }
     };
 
@@ -88,9 +88,9 @@ export async function GET() {
         });
 
         result.tests.sheetAccess.success = true;
-        result.tests.sheetAccess.sheets = response.data.sheets?.map((s: { properties?: { title?: string; sheetId?: number } }) => ({
-          title: s.properties?.title,
-          id: s.properties?.sheetId
+        result.tests.sheetAccess.sheets = response.data.sheets?.map((s) => ({
+          title: s.properties?.title ?? undefined,
+          id: s.properties?.sheetId ?? undefined
         })) || [];
       } catch (error: unknown) {
         const err = error as { message?: string; code?: unknown };
