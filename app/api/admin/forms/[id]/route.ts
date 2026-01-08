@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { connectToDatabase } from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
 import { logAuditEvent, calculateChanges } from "@/app/utils/audit-logger";
+import { syncRecordToSheet } from "@/app/utils/incremental-sync";
 
 export async function GET(
   request: Request,
@@ -257,42 +258,27 @@ export async function PATCH(
       }
     }
 
-    // Trigger incremental Google Sheets sync (non-blocking with retry)
-    const syncWithRetry = async (url: string, body: object, retries = 3) => {
-      for (let attempt = 1; attempt <= retries; attempt++) {
-        try {
-          const response = await fetch(url, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(body),
-          });
-          if (response.ok) {
-            console.log(`✅ Sync successful on attempt ${attempt}`);
-            return;
-          }
-          throw new Error(`HTTP ${response.status}`);
-        } catch (err) {
-          console.error(`❌ Sync attempt ${attempt}/${retries} failed:`, err);
-          if (attempt < retries) {
-            // Exponential backoff: 1s, 2s, 4s
-            await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, attempt - 1)));
-          }
-        }
-      }
-      console.error(`🚨 All sync attempts failed after ${retries} retries`);
-    };
+    // Trigger incremental Google Sheets sync (non-blocking, direct call)
+    (async () => {
+      try {
+        console.log(`🔄 Triggering direct form sync for record ${id} to Google Sheets...`);
+        
+        // Sync the form record directly (no HTTP call)
+        const formSyncResult = await syncRecordToSheet(
+          "form",
+          id,
+          "Registrations"
+        );
 
-    try {
-      const baseUrl = process.env.NEXTAUTH_URL || process.env.ROOT_URL || 'http://localhost:3000';
-      
-      // Sync form record with retry
-      syncWithRetry(
-        `${baseUrl}/api/sync/incremental`,
-        { collection: "form", recordId: id, sheetName: "Registrations" }
-      ).catch(err => console.error("Background sync failed:", err));
-    } catch (error) {
-      console.error("Error triggering sync:", error);
-    }
+        if (!formSyncResult.success) {
+          console.error(`❌ Form sync failed:`, formSyncResult.message);
+        } else {
+          console.log("✅ Form sync successful:", formSyncResult.message);
+        }
+      } catch (error) {
+        console.error("❌ Error triggering sync:", error);
+      }
+    })();
 
     return NextResponse.json({ success: true, data: result });
   } catch (error) {
