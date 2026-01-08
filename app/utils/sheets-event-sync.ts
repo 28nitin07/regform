@@ -242,21 +242,24 @@ export async function syncPaymentSubmission(paymentId: string): Promise<SyncResu
 
     const payment = paymentAggregation[0];
     const user = payment.ownerData?.[0];
-    const forms = payment.formsData || [];
+    const allForms = payment.formsData || [];
+    
+    // Only include submitted forms (exclude drafts)
+    const forms = allForms.filter((f: { status?: string }) => f.status === "submitted");
 
     // Extract user contact info
     const userEmail = String(user?.email || "");
     const userPhone = String(user?.phone || "");
 
-    // Extract sports and calculate player count
+    // Extract sports and calculate player count from submitted forms only
     let sports = "";
     let numberOfPeople = 0;
     let category = "";
     
     if (forms.length > 0) {
-      // Get all sports/events
+      // Get all sports/events from submitted forms
       sports = forms.map((f: { title?: string }) => String(f.title || "")).filter(Boolean).join(", ");
-      // Count total players across all forms
+      // Count total players across all submitted forms
       numberOfPeople = forms.reduce((total: number, form: { fields?: Record<string, unknown> }) => {
         const fields = form.fields as Record<string, unknown> | undefined;
         const playerFields = (fields?.playerFields as Record<string, unknown>[]) || [];
@@ -987,8 +990,11 @@ export async function initialFullSync(): Promise<InitialSyncResult> {
       const paymentOwners = await db.collection("users").find({ _id: { $in: ownerIds } }).toArray();
       const paymentOwnerMap = new Map(paymentOwners.map(o => [o._id.toString(), o]));
       
-      // Fetch all forms to get sports and count people
-      const paymentForms = await db.collection("form").find({ ownerId: { $in: ownerIds } }).toArray();
+      // Fetch all forms to get sports and count people (only submitted forms)
+      const paymentForms = await db.collection("form").find({ 
+        ownerId: { $in: ownerIds },
+        status: "submitted"  // Only include submitted forms, exclude drafts
+      }).toArray();
       const formsByOwner = new Map<string, typeof paymentForms>();
       paymentForms.forEach(form => {
         const ownerId = form.ownerId?.toString();

@@ -68,6 +68,12 @@ export async function syncRecordToSheet(
       return { success: false, message: `Record not found: ${recordId}` };
     }
 
+    // Only sync forms with "submitted" status - skip draft forms
+    if (collection === "form" && document.status !== "submitted") {
+      console.log(`📊 Skipping form ${recordId} - status is "${document.status}", not "submitted"`);
+      return { success: true, message: `Form ${recordId} skipped (status: ${document.status})` };
+    }
+
     // Determine target sheet name
     let targetSheet = sheetName;
     if (!targetSheet) {
@@ -159,9 +165,12 @@ export async function syncRecordToSheet(
     
     if (collection === "payments") {
       const owner = document.ownerData as Record<string, unknown> | undefined;
-      const forms = (document.formsData || []) as Record<string, unknown>[];
+      const allForms = (document.formsData || []) as Record<string, unknown>[];
       
-      // Calculate sports and player count
+      // Only count submitted forms (exclude drafts)
+      const forms = allForms.filter((f: Record<string, unknown>) => f.status === "submitted");
+      
+      // Calculate sports and player count from submitted forms only
       const sports = forms.map((f: Record<string, unknown>) => String(f.title || "")).filter(Boolean).join(", ");
       const totalPlayers = forms.reduce((sum: number, f: Record<string, unknown>) => {
         const fields = (f.fields as Record<string, unknown>) || {};
