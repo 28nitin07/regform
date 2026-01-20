@@ -79,7 +79,7 @@ export async function syncRecordToSheet(
     if (!targetSheet) {
       if (collection === "users") targetSheet = "Users";
       else if (collection === "payments") targetSheet = "**Finance (Do Not Open)**";
-      else if (collection === "form") targetSheet = "Forms";
+      else if (collection === "form") targetSheet = "Registrations";
       else targetSheet = "Sheet1";
     }
 
@@ -104,6 +104,40 @@ export async function syncRecordToSheet(
 
     if (!spreadsheetId) {
       return { success: false, message: "GOOGLE_SHEET_ID not configured" };
+    }
+
+    // Define headers for each sheet type
+    const sheetHeaders: Record<string, string[]> = {
+      "Users": ["Name", "Email", "Contact Number", "University", "Verified", "Registration Done", "Payment Done", "Created At"],
+      "**Finance (Do Not Open)**": ["Date", "Time", "Transaction ID", "Payment ID", "Payment Amount", "Account Holder Name", "University", "Sports", "Category", "Player Count", "Contact Number", "Email", "Payment Proof", "Status", "Send Email?"],
+      "Registrations": ["Sport/Event", "Status", "University Name", "User Email", "User Phone", "Created At", "Updated At", "Player Count", "Player Names", "Player Emails", "Player Phones", "POC/Coach Name", "POC/Coach Email", "POC/Coach Phone"]
+    };
+
+    // Ensure headers exist before any operation
+    const headers = sheetHeaders[targetSheet];
+    if (headers) {
+      try {
+        const headerResponse = await sheets.spreadsheets.values.get({
+          spreadsheetId,
+          range: `${targetSheet}!A1:ZZ1`,
+        });
+        const firstRow = headerResponse.data.values?.[0];
+        
+        // If row 1 is empty or doesn't match headers, write headers
+        if (!firstRow || firstRow.length === 0 || firstRow[0] !== headers[0]) {
+          await sheets.spreadsheets.values.update({
+            spreadsheetId,
+            range: `${targetSheet}!A1`,
+            valueInputOption: 'RAW',
+            requestBody: {
+              values: [headers]
+            },
+          });
+          console.log(`✅ Headers added to ${targetSheet}`);
+        }
+      } catch (error) {
+        console.warn(`⚠️ Could not ensure headers for ${targetSheet}:`, error);
+      }
     }
 
     // Get existing sheet data to find the row

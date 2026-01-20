@@ -251,6 +251,11 @@ export async function PATCH(
           );
 
           console.log(`💰 Payment updated: ${payment._id} → ₹${newTotalAmount} (${playerFields.length} players)`);
+          
+          // Sync the payment to Google Sheets
+          syncRecordToSheet("payments", payment._id.toString(), "**Finance (Do Not Open)**").catch(err => {
+            console.error("❌ Failed to sync payment to sheets:", err);
+          });
         }
       } catch (error) {
         console.error("⚠️ Failed to update payment:", error);

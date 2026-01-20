@@ -50,7 +50,7 @@ function formatDate(dateValue: unknown): string {
   if (!dateValue) return "";
   try {
     const date = dateValue instanceof Date ? dateValue : new Date(dateValue as string);
-    return date.toLocaleString('en-US', { 
+    return date.toLocaleString('en-IN', { 
       timeZone: 'Asia/Kolkata',
       year: 'numeric',
       month: '2-digit',
@@ -232,6 +232,7 @@ export async function syncPaymentSubmission(paymentId: string): Promise<SyncResu
           as: "formsData"
         }
       },
+      { $unwind: { path: "$ownerData", preserveNullAndEmptyArrays: true } },
       { $limit: 1 }
     ]).toArray();
 
@@ -241,7 +242,7 @@ export async function syncPaymentSubmission(paymentId: string): Promise<SyncResu
     }
 
     const payment = paymentAggregation[0];
-    const user = payment.ownerData?.[0];
+    const user = payment.ownerData; // Already unwound, no need for [0]
     const allForms = payment.formsData || [];
     
     // Only include submitted forms (exclude drafts)
@@ -297,7 +298,7 @@ export async function syncPaymentSubmission(paymentId: string): Promise<SyncResu
       numberOfPeople.toString(),
       userPhone,
       userEmail,
-      payment.paymentProof ? `${process.env.ROOT_URL || ""}/api/payments/proof/${payment.paymentProof}` : "",
+      payment.paymentProof ? `${process.env.NEXTAUTH_URL || process.env.ROOT_URL || ""}/api/payments/proof/${payment.paymentProof}` : "",
       "Not Started",
       "No"
     ];
@@ -354,11 +355,14 @@ async function findRowByIdInSheet(sheetName: string, id: string, additionalSearc
 
     // Determine search strategy based on sheet
     if (sheetName === "Users") {
-      // For Users sheet, the "id" is actually the MongoDB user ID
-      // We need to search by email in column B
-      // But we're passed userId, so we need to get the email first
-      // This is a problem - the function receives userId but needs email
-      // For now, search in column B assuming id is email
+      // For Users sheet, search by email in column B
+      // Use additionalSearchData.email which should be passed in
+      const searchValue = additionalSearchData?.email || (id.includes('@') ? id : null);
+      if (!searchValue) {
+        console.warn(`[Sheets] Users sheet search requires email, but none provided for ID: ${id}`);
+        return null;
+      }
+
       const response = await sheets.spreadsheets.values.get({
         spreadsheetId,
         range: `${sheetName}!B:B`, // Column B: Email
@@ -368,10 +372,6 @@ async function findRowByIdInSheet(sheetName: string, id: string, additionalSearc
       if (!values || values.length === 0) {
         return null;
       }
-
-      // If id looks like an email, search by it; otherwise search by additional data
-      const searchValue = id.includes('@') ? id : additionalSearchData?.email;
-      if (!searchValue) return null;
 
       for (let i = 0; i < values.length; i++) {
         if (values[i][0] === searchValue) {
@@ -1056,7 +1056,7 @@ export async function initialFullSync(): Promise<InitialSyncResult> {
           numberOfPeople.toString(),
           owner ? String(owner.phone || "") : "",
           owner ? String(owner.email || "") : "",
-          doc.paymentProof ? `${process.env.ROOT_URL || ""}api/payments/proof/${doc.paymentProof}` : "",
+          doc.paymentProof ? `${process.env.NEXTAUTH_URL || process.env.ROOT_URL || ""}/api/payments/proof/${doc.paymentProof}` : "",
           status,
           sendEmail
         ];
