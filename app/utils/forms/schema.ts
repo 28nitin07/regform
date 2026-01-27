@@ -171,8 +171,12 @@ export const sportField = z.object({
         "Table Tennis (Men)",
         "Table Tennis (Women)",
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         "8 Ball Pool (Mixed)",
         "Snooker (Mixed)",
+=======
+        "Squash",
+>>>>>>> Stashed changes
 =======
         "Squash",
 >>>>>>> Stashed changes
@@ -332,8 +336,13 @@ export const eventSchema: EventSchema = {
             ],
         },
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         Ball_Pool_Mixed: {
             eventName: sports.Ball_Pool_Mixed,
+=======
+        Squash: {
+            eventName: sports.Squash,
+>>>>>>> Stashed changes
 =======
         Squash: {
             eventName: sports.Squash,
@@ -344,6 +353,7 @@ export const eventSchema: EventSchema = {
                     fields: z.object({
                         coachFields,
                         playerFields: z.array(playerFields.extend({ gender: z.enum(["Select Gender", "Male", "Female"], { message: "Gender is required" }) }))
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
                             .min(3, `Fill details of minimum ${3} players`)
                             .max(4, `A maximum of ${4} players are allowed`),
@@ -378,6 +388,8 @@ export const eventSchema: EventSchema = {
                             .min(3, `Fill details of minimum ${4} players`)
                             .max(4, `A maximum of ${3} players are allowed`),
 =======
+=======
+>>>>>>> Stashed changes
                             .min(1, `Fill details of minimum ${1} players`)
                             .max(10, `A maximum of ${10} players are allowed`),
                     }),
@@ -386,6 +398,9 @@ export const eventSchema: EventSchema = {
                         playerFields: z.array(playerFieldsDraft.extend({ gender: z.enum(["Select Gender", "Male", "Female"], { message: "Gender is required" }) }))
                             .min(1, `Fill details of minimum ${1} players`)
                             .max(10, `A maximum of ${10} players are allowed`),
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
                     }),
                     meta: {
