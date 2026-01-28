@@ -154,26 +154,29 @@ export async function PATCH(
     // Get owner data for DMZ sync
     const owner = await db.collection("users").findOne({ _id: form.ownerId });
     
-    if (owner) {
-      // Process DMZ swaps for team owners
-      for (const swap of swaps) {
-        const isOwnerPlayer = 
-          swap.oldPlayerData.email.toLowerCase() === (owner.email as string || '').toLowerCase() ||
-          swap.oldPlayerData.phone === (owner.phone as string || '');
-
-        if (isOwnerPlayer) {
-          swapUserInDmz(swap.oldPlayerData.email, {
-            email: swap.newPlayerData.email,
-            name: swap.newPlayerData.name,
-            phone: swap.newPlayerData.phone,
-            university: (owner.universityName as string) || ''
-          }).catch(err => {
-            console.error("❌ Failed to swap player in DMZ:", err);
-          });
-          
-          console.log(`🔄 DMZ swap triggered: ${swap.oldPlayerData.email} → ${swap.newPlayerData.email}`);
+    if (owner && owner.universityName && result.status === 'submitted') {
+      // 🔄 Remove all old players from DMZ
+      console.log(`[DMZ] Removing ${swaps.length} old players from DMZ...`);
+      import('@/app/utils/dmz-api').then(({ removeUserFromDmz }) => {
+        for (const swap of swaps) {
+          removeUserFromDmz(swap.oldPlayerData.email)
+            .catch(err => console.error(`[DMZ] Failed to remove old player ${swap.oldPlayerData.email}:`, err));
         }
-      }
+      });
+
+      // 🔄 Sync all current players to DMZ (including all new players)
+      // This ensures the DMZ database has the latest player list
+      console.log(`[DMZ] Syncing all players to DMZ after batch swap (form ${id})...`);
+      import('@/app/utils/dmz-api').then(({ syncFormPlayersToDmz }) => {
+        syncFormPlayersToDmz(result as { fields?: { playerFields?: Array<{ name?: string; email?: string; phone?: string; [key: string]: unknown; }>; }; }, owner.universityName as string)
+          .catch(err => console.error("[DMZ] Failed to sync players after batch swap:", err));
+      });
+      
+      console.log(`🔄 DMZ sync triggered for ${swaps.length} player swaps`);
+    } else if (!owner?.universityName) {
+      console.warn(`[DMZ] Cannot sync - university not found for owner: ${form.ownerId}`);
+    } else if (result.status !== 'submitted') {
+      console.log(`[DMZ] Skipping sync - form status is '${result.status}' (not submitted)`);
     }
 
     return NextResponse.json({
