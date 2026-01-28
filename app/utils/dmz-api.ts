@@ -45,6 +45,16 @@ export async function addUserToDmz(user: DmzUser): Promise<DmzApiResponse> {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
+      
+      // 409 Conflict means user already exists - treat as success since DMZ state is correct
+      if (response.status === 409) {
+        console.log('[DMZ] User already exists (409):', user.email);
+        return {
+          success: true,
+          message: 'User already exists in DMZ'
+        };
+      }
+      
       console.error('[DMZ] Failed to add user:', response.status, errorData);
       return {
         success: false,
