@@ -126,13 +126,66 @@ export async function swapUserInDmz(
   oldEmail: string,
   newUser: DmzUser
 ): Promise<DmzApiResponse> {
-  // First remove the old user
+  // First try to remove the old user (if exists)
   const removeResult = await removeUserFromDmz(oldEmail);
+  
+  // Continue even if remove fails (user might not exist in DMZ)
+  // The important part is ensuring the new user is added
   if (!removeResult.success) {
-    return removeResult;
+    console.log(`[DMZ] Old user "${oldEmail}" not found, proceeding to add new user`);
   }
 
-  // Then add the new user
+  // Always add the new user regardless of remove result
   const addResult = await addUserToDmz(newUser);
   return addResult;
+}
+
+/**
+ * Sync all players from a form submission to DMZ
+ * @param formData Form data containing player information
+ * @param university University name for all players
+ * @returns Promise that resolves when all players are synced
+ */
+export async function syncFormPlayersToDmz(
+  formData: {
+    fields?: {
+      playerFields?: Array<{
+        name?: string;
+        email?: string;
+        phone?: string;
+        [key: string]: unknown;
+      }>;
+    };
+  },
+  university: string
+): Promise<void> {
+  const players = formData.fields?.playerFields || [];
+  
+  if (players.length === 0) {
+    console.log('[DMZ] No players to sync');
+    return;
+  }
+
+  console.log(`[DMZ] Syncing ${players.length} players to DMZ`);
+
+  // Sync all players in parallel (non-blocking)
+  const syncPromises = players.map((player, index) => {
+    if (!player.email || !player.name || !player.phone) {
+      console.warn(`[DMZ] Skipping player ${index + 1} - missing required fields`);
+      return Promise.resolve();
+    }
+
+    return addUserToDmz({
+      email: player.email,
+      name: player.name,
+      university: university,
+      phone: player.phone
+    }).catch(err => {
+      console.error(`[DMZ] Failed to sync player ${player.email}:`, err);
+      // Don't throw - allow other players to continue syncing
+    });
+  });
+
+  await Promise.allSettled(syncPromises);
+  console.log(`[DMZ] Finished syncing ${players.length} players`);
 }

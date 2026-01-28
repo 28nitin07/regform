@@ -10,6 +10,7 @@ import sendConfirmationEmail from "@/app/utils/mailer/ConfirmationMail";
 import { syncFormSubmission } from "@/app/utils/sheets-event-sync";
 import { rateLimit, rateLimitPresets } from "@/app/utils/rateLimit";
 import { handleCors, addCorsHeaders } from "@/app/utils/cors";
+import { syncFormPlayersToDmz } from "@/app/utils/dmz-api";
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
 interface FormObj {
@@ -286,6 +287,15 @@ if (!isDraft) {
   syncFormSubmission(formId).catch(err => {
     console.error("[Sheets] Form sync failed (non-blocking):", err.message || err);
     // Don't throw - allow form submission to succeed even if sheets sync fails
+  });
+
+  // Sync all players to DMZ (non-blocking)
+  syncFormPlayersToDmz(
+    { fields },
+    userResponse.data.universityName as string || ''
+  ).catch(err => {
+    console.error("[DMZ] Failed to sync players (non-blocking):", err);
+    // Don't throw - allow form submission to succeed even if DMZ sync fails
   });
 }
 
