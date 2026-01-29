@@ -63,12 +63,6 @@ All automation scripts are in [`scripts/`](./scripts/):
 
 **Quick start:** See [`scripts/README.md`](./scripts/README.md)
 
-## Documentation
-
-- [`BACKUP_SYSTEM.md`](./BACKUP_SYSTEM.md) - Complete backup system guide
-- [`RAILWAY_MYSQL_SETUP.md`](./RAILWAY_MYSQL_SETUP.md) - Database setup
-- [`VERCEL_DEPLOYMENT.md`](./VERCEL_DEPLOYMENT.md) - Alternative deployment options
-
 ## Contributors
 <a href="https://github.com/Agneepath-2025/regform/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=Agneepath-2025/regform" />
