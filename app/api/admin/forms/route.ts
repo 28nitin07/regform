@@ -121,7 +121,7 @@ export async function POST(req: Request) {
         emailVerified: true, // Auto-verify for admin-created users
         registrationDone: false,
         paymentDone: false,
-        submittedForms: [],
+        submittedForms: {}, // Use object instead of array
         createdAt: new Date(),
         updatedAt: new Date()
       };
