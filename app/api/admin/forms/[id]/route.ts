@@ -173,24 +173,38 @@ export async function PATCH(
       const formStatus = body.status || result.status || "submitted";
       const dashboardStatus = formStatus === "confirmed" ? "confirmed" : "not_confirmed";
 
-      // Update user's submittedForms field with current data
-      const updatePayload: Record<string, unknown> = {
-        [`submittedForms.${result.title}.Players`]: playerCount,
-        [`submittedForms.${result.title}.status`]: dashboardStatus,
-        updatedAt: new Date()
-      };
-      
       console.log(`🔄 Status mapping: form='${formStatus}' → dashboard='${dashboardStatus}'`);
 
-      // If this is the first form for this user, ensure submittedForms exists
-      const userUpdateResult = await usersCollection.updateOne(
-        { _id: result.ownerId },
-        { $set: updatePayload },
-        { upsert: false }
-      );
+      // First, get the current user to check submittedForms structure
+      const currentUser = await usersCollection.findOne({ _id: result.ownerId });
+      
+      if (currentUser) {
+        // If submittedForms is an array or doesn't exist, convert it to an object
+        if (Array.isArray(currentUser.submittedForms) || !currentUser.submittedForms) {
+          console.log(`🔧 Converting submittedForms from array to object for user ${result.ownerId}`);
+          await usersCollection.updateOne(
+            { _id: result.ownerId },
+            { $set: { submittedForms: {} } }
+          );
+        }
 
-      if (userUpdateResult.matchedCount > 0) {
-        console.log(`👤 User dashboard synced: ${result.ownerId} → ${result.title}: ${playerCount} players (${dashboardStatus})`);
+        // Now update with the form data
+        const updatePayload: Record<string, unknown> = {
+          [`submittedForms.${result.title}.Players`]: playerCount,
+          [`submittedForms.${result.title}.status`]: dashboardStatus,
+          updatedAt: new Date()
+        };
+
+        const userUpdateResult = await usersCollection.updateOne(
+          { _id: result.ownerId },
+          { $set: updatePayload }
+        );
+
+        if (userUpdateResult.matchedCount > 0) {
+          console.log(`👤 User dashboard synced: ${result.ownerId} → ${result.title}: ${playerCount} players (${dashboardStatus})`);
+        } else {
+          console.warn(`⚠️ User not found for ownerId: ${result.ownerId}`);
+        }
       } else {
         console.warn(`⚠️ User not found for ownerId: ${result.ownerId}`);
       }
